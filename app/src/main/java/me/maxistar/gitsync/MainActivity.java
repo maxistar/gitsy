@@ -32,8 +32,11 @@ public class MainActivity extends AppCompatActivity {
     public static final String GIT_REMOTE_ADDRESS = "git_remote_address";
     public static final String GIT_REMOTE_USER = "git_remote_user";
     public static final String GIT_REMOTE_PASSWORD = "git_remote_password";
+    public static final String TAG = "GitSyncDebug";
     final String FOLDER_NAME = "temp-repo7";
     Uri folderUrl;
+
+    boolean isSynchronizing = false;
 
     String gitRemoteAddress;
 
@@ -106,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
         syncButton = this.findViewById(R.id.syncButton);
         syncButton.setOnClickListener(
                 v -> {
+                    isSynchronizing = true;
+                    updateUiState();
                     new SyncRepoTask().execute();
                 }
         );
@@ -115,19 +120,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUiState() {
-        boolean enabledValue = false;
-        boolean disableValue = true;
-        if (this.folderUrl == null) {
-            enabledValue = true;
-            disableValue = false;
-        }
-        repoUrlEditor.setEnabled(enabledValue);
-        userNameEditor.setEnabled(enabledValue);
-        passwordEditor.setEnabled(enabledValue);
+        boolean repoNotInitialized = this.folderUrl == null;
 
-        cloneButton.setEnabled(enabledValue);
-        clearButton.setEnabled(disableValue);
-        syncButton.setEnabled(disableValue);
+        repoUrlEditor.setEnabled(repoNotInitialized);
+        userNameEditor.setEnabled(repoNotInitialized);
+        passwordEditor.setEnabled(repoNotInitialized);
+
+        cloneButton.setEnabled(repoNotInitialized);
+        clearButton.setEnabled(!repoNotInitialized);
+        syncButton.setEnabled(!repoNotInitialized && !isSynchronizing);
     }
 
     public void openFolderPicker() {
@@ -156,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                 // Optional: Display or use the URI
-                System.out.println("Selected Folder URI: " + folderUri.toString());
+                Log.d(TAG, "Selected Folder URI: " + folderUri.toString());
             }
         }
     }
@@ -195,17 +196,23 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void moveFilesToSaf(File sourceDir, Uri treeUri) {
+
+        Log.d(TAG, "Move Files to SAF");
+
         DocumentFile pickedDir = DocumentFile.fromTreeUri(this, treeUri);
 
         if (pickedDir != null) {
             moveFilesRecursively(sourceDir, pickedDir);
         }
+
+        Log.d(TAG, "Stop Moving Files to SAF");
     }
 
     private void moveFilesRecursively(File sourceDir, DocumentFile targetDir) {
         if (sourceDir.isDirectory()) {
             // For each file/subdirectory in the source directory
             for (File file : sourceDir.listFiles()) {
+                Log.d(TAG, "copy " + file.getName());
                 if (file.isDirectory()) {
                     if (file.getName().equals(".git")) {
                         continue;
@@ -227,10 +234,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void copyFileToSaf(File sourceFile, DocumentFile targetDir) {
+
         try {
-            DocumentFile existingFile = targetDir.findFile(sourceFile.getName());
-            if (existingFile != null) {
-                existingFile.delete();
+            DocumentFile targetFile = targetDir.findFile(sourceFile.getName());
+            if (targetFile != null) {
+                //File targetFile = new File(targetDir, file.getName());
+                if (targetFile.exists() && isFileUnchangedBasedOnTime(sourceFile, targetFile)) {
+                    Log.d(TAG, "Skipping unchanged file: " + sourceFile.getAbsolutePath());
+                    return;
+                }
+
+                targetFile.delete(); // need to delete otherwise it creates a new file
             }
 
             // Create a new file in the SAF target directory
@@ -251,6 +265,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void copyFromSaf(Uri treeUri, String destinationDirName) {
+        Log.d(TAG, "Move Files from SAF");
         File destinationDir = new File(getCacheDir(), destinationDirName);
         DocumentFile pickedDir = DocumentFile.fromTreeUri(this, treeUri);
 
@@ -263,8 +278,9 @@ public class MainActivity extends AppCompatActivity {
             // Recursively copy files from SAF to internal storage
             copyFilesRecursivelyFromSaf(pickedDir, destinationDir);
         } else {
-            System.out.println("Invalid SAF directory.");
+            Log.d(TAG, "Invalid SAF directory.");
         }
+        Log.d(TAG, "Stop Moving Files from SAF");
     }
 
     private void copyFilesRecursivelyFromSaf(DocumentFile sourceDir, File targetDir) {
@@ -283,10 +299,43 @@ public class MainActivity extends AppCompatActivity {
                 // Recursively copy files in this subdirectory
                 copyFilesRecursivelyFromSaf(file, subDir);
             } else if (file.isFile()) {
+                File targetFile = new File(targetDir, file.getName());
+                if (targetFile.exists() && isFileUnchangedBasedOnTime(file, targetFile)) {
+                    Log.d(TAG, "Skipping unchanged file: " + targetFile.getAbsolutePath());
+                    continue;
+                }
+
                 // Copy the file to the target directory
                 copyFileFromSaf(file, new File(targetDir, file.getName()));
             }
         }
+    }
+
+    private boolean isFileUnchangedBasedOnTime(DocumentFile sourceFile, File targetFile) {
+        // SAF doesn't provide a direct last-modified timestamp, so rely on metadata
+        long sourceLastModified = sourceFile.lastModified();
+        long targetLastModified = targetFile.lastModified();
+
+        if (sourceLastModified == 0 || targetLastModified == 0) {
+            return false; // Treat as changed if timestamps are unavailable
+        }
+
+        // If the source file's modification time is greater, the file has changed
+        return sourceLastModified <= targetLastModified;
+    }
+
+    private boolean isFileUnchangedBasedOnTime(File sourceFile,DocumentFile targetFile) {
+        // SAF doesn't provide a direct last-modified timestamp, so rely on metadata
+        long sourceLastModified = sourceFile.lastModified();
+        long targetLastModified = targetFile.lastModified();
+
+        if (sourceLastModified == 0 || targetLastModified == 0) {
+            Log.d(TAG, "source of target time is null");
+            return false; // Treat as changed if timestamps are unavailable
+        }
+
+        // If the source file's modification time is greater, the file has changed
+        return sourceLastModified <= targetLastModified;
     }
 
     private void copyFileFromSaf(DocumentFile sourceFile, File targetFile) {
@@ -297,7 +346,8 @@ public class MainActivity extends AppCompatActivity {
             while ((len = in.read(buffer)) > 0) {
                 out.write(buffer, 0, len);
             }
-            System.out.println("Copied file: " + targetFile.getAbsolutePath());
+            targetFile.setLastModified(sourceFile.lastModified());
+            Log.d(TAG, "Copied file: " + targetFile.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -314,16 +364,16 @@ public class MainActivity extends AppCompatActivity {
             if (files != null) {
                 for (File file : files) {
                     if (file.isDirectory()) {
-                        System.out.println("Directory: " + file.getName());
+                        Log.d(TAG, "Directory: " + file.getName());
                         // Recursively list files in subdirectory
                         listRepositoryFiles(file);
                     } else {
-                        System.out.println("File: " + file.getName());
+                        Log.d(TAG, "File: " + file.getName());
                     }
                 }
             }
         } else {
-            System.out.println("The repository directory does not exist or is not a directory.");
+            Log.d(TAG, "The repository directory does not exist or is not a directory.");
         }
     }
 
@@ -354,7 +404,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(Void... voids) {
             try {
-                Log.d("BUTTONS", "Start Clone Repo");
+                Log.d(TAG, "Start Clone Repo");
                 //cloneRepository("https://github.com/maxistar/notes-md.git");
 
                 File tempDir = new File(getCacheDir(), this.localDirName);
@@ -365,11 +415,11 @@ public class MainActivity extends AppCompatActivity {
                         .setCredentialsProvider(new UsernamePasswordCredentialsProvider(gitRemoteUser, gitRemotePassword))
                         .call();
 
-                Log.d("BUTTONS", "Stop Clone Repo");
+                Log.d(TAG, "Stop Clone Repo");
 
                 moveFilesToSaf(tempDir, folderUrl);
 
-                listRepositoryFilesByName(this.localDirName);
+                //listRepositoryFilesByName(this.localDirName);
 
                 return "Repository cloned successfully!";
 
@@ -448,6 +498,8 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             // Update the UI after cloning
             Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
+            isSynchronizing = false;
+            updateUiState();
         }
     }
 
