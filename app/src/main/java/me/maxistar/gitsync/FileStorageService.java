@@ -9,16 +9,32 @@ import androidx.documentfile.provider.DocumentFile;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 public class FileStorageService {
 
     public static final String TAG = "GitSyncDebug";
+    public static final String REGISTRY_JSON = "registry.json";
+
+    private FileRegistry localRegistry;
+
+    public void loadRegistry(Context context) {
+        Log.d(TAG, "load registry");
+        File localDir = new File(context.getCacheDir(), REGISTRY_JSON);
+        localRegistry = FileRegistry.loadRegistryFromFile(localDir);
+    }
+
+    public void saveLocalRegistry(Context context) {
+        File localDir = new File(context.getCacheDir(), REGISTRY_JSON);
+        FileRegistry.saveRegistryToFile(localRegistry, localDir);
+    }
 
 
-    public void moveFilesToSaf(Context context, String sourceDirName, Uri treeUri) {
+
+    public void copyFilesToSaf(Context context, String sourceDirName, Uri treeUri) {
 
         Log.d(TAG, "Move Files to SAF");
 
@@ -206,20 +222,23 @@ public class FileStorageService {
         }
     }
 
-    public boolean deleteDirectoryRecursively(File directory) {
+    public boolean deleteDirectoryRecursively(Context context, File directory) {
         if (directory != null && directory.isDirectory()) {
             File[] files = directory.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (!deleteDirectoryRecursively(file)) {
+                    if (!deleteDirectoryRecursively(context, file)) {
                         return false;
                     }
                 }
             }
         }
+
+        // create a new empty registry and store it
+        localRegistry = new FileRegistry("", FileRegistry.NODE_FOLDER);
+        saveLocalRegistry(context);
+
         return directory != null && directory.delete();
+
     }
-
-
-
 }

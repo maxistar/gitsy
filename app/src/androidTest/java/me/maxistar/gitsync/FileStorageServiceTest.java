@@ -96,7 +96,7 @@ public class FileStorageServiceTest {
         // Clean up test directories
         deleteDirectoryRecursively(sourceDir);
 
-        Uri safUri = createTestSafDirectory();
+        Uri safUri = getTestSafDirectoryUri();
         DocumentFile pickedDir = DocumentFile.fromTreeUri(context, safUri);
         deleteDirectoryContent(pickedDir);
     }
@@ -138,53 +138,50 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    public void testMoveFilesToSaf() throws IOException {
-        // Simulate SAF directory
-        Uri safUri = createTestSafDirectory();
+    public void testCopyFilesToSaf() throws IOException {
+        Uri safUri = getTestSafDirectoryUri();
 
         createTestFile(new File(sourceDir, "file1.txt"), "some contents");
         createTestFile(new File(sourceDir, "file2.txt"), "some contents");
+        File folder = new File(sourceDir, "folder");
+        folder.mkdir();
+        createTestFile(new File(folder, "file2.txt"), "some contents");
         System.out.println("Created 2 files");
 
-
-
         // Move files to SAF directory
-        fileStorageService.moveFilesToSaf(context, SOURCE_DIR_NAME, safUri);
+        fileStorageService.copyFilesToSaf(context, SOURCE_DIR_NAME, safUri);
 
         // Verify that files were moved
         DocumentFile safDirectory = DocumentFile.fromTreeUri(context, safUri);
         assert safDirectory != null;
-        assert safDirectory.listFiles().length == 2; // Ensure all files moved
+        assert safDirectory.listFiles().length == 3; // Ensure all files moved
     }
 
     @Test
-    public void testMoveFilesToSaf2() throws IOException {
-        // Simulate SAF directory
-        Uri safUri = createTestSafDirectory();
+    public void testCopyFilesFromSaf() throws IOException {
+        Uri safUri = getTestSafDirectoryUri();
 
         DocumentFile pickedDir = DocumentFile.fromTreeUri(context, safUri);
-        DocumentFile newFile = pickedDir.createFile("application/octet-stream", "filename1");
-        createTestFile(newFile, "some file content");
 
-        DocumentFile newFile2 = pickedDir.createFile("application/octet-stream", "filename2");
-        createTestFile(newFile2, "some file content");
+        createTestFileInFolder(pickedDir, "filename1", "some file content 1");
+        createTestFileInFolder(pickedDir, "filename2", "some file content 2");
 
-        // createTestFile(new DocumentFile(sourceDir, "file1.txt"), "some contents");
-        // createTestFile(new File(sourceDir, "file2.txt"), "some contents");
+        DocumentFile subDir = pickedDir.createDirectory("folder");
+        createTestFileInFolder(subDir, "filename3", "some file content 3");
+
         System.out.println("Created 2 files");
 
-
-
-        // Move files to SAF directory
         fileStorageService.copyFromSaf(context, safUri, SOURCE_DIR_NAME);
 
-        // Verify that files were moved
-        DocumentFile safDirectory = DocumentFile.fromTreeUri(context, safUri);
-        // assert safDirectory != null;
-        assert sourceDir.listFiles().length == 2; // Ensure all files moved
+        assert sourceDir.listFiles().length == 3; // Ensure all files moved
     }
 
-    private Uri createTestSafDirectory() {
+    private void createTestFileInFolder(DocumentFile pickedDir, String filename, String someFileContent) throws IOException {
+        DocumentFile newFile = pickedDir.createFile("application/octet-stream", filename);
+        createTestFile(newFile, someFileContent);
+    }
+
+    private Uri getTestSafDirectoryUri() {
         return Uri.parse("content://com.android.externalstorage.documents/tree/0CFA-3314%3ADocuments%2FTest01");
     }
 }

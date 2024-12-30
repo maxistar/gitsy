@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         clearButton.setOnClickListener(
                 v -> {
                     File tempDir = new File(getCacheDir(), FOLDER_NAME);
-                    fileStorageService.deleteDirectoryRecursively(tempDir);
+                    fileStorageService.deleteDirectoryRecursively(MainActivity.this, tempDir);
                     resetFolderUri();
                     updateUiState();
                 }
@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 gitService.cloneRepository(MainActivity.this, FOLDER_NAME, repoUrl, gitRemoteUser, gitRemotePassword);
 
-                fileStorageService.moveFilesToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
+                fileStorageService.copyFilesToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
 
                 return "Repository cloned successfully!";
 
@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
 
                 gitService.syncRepository(MainActivity.this, FOLDER_NAME, gitRemoteUser, gitRemotePassword);
 
-                fileStorageService.moveFilesToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
+                fileStorageService.copyFilesToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
 
                 return "Files synchronized successfully!";
             } catch (Exception e) {
