@@ -1,8 +1,6 @@
 package me.maxistar.gitsync;
-import org.eclipse.jgit.api.Git;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.documentfile.provider.DocumentFile;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,21 +8,11 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -58,9 +46,16 @@ public class MainActivity extends AppCompatActivity {
 
     Button syncButton;
 
+    FileStorageService fileStorageService;
+
+    GitService gitService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        fileStorageService = new FileStorageService();
+        gitService = new GitService();
+
         setContentView(R.layout.activity_main);
 
         folderUrl = getFolderUri();
@@ -79,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         clearButton.setOnClickListener(
                 v -> {
                     File tempDir = new File(getCacheDir(), FOLDER_NAME);
-                    deleteDirectoryRecursively(tempDir);
+                    fileStorageService.deleteDirectoryRecursively(tempDir);
                     resetFolderUri();
                     updateUiState();
                 }
@@ -152,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
                 storeFolderUri(folderUri);
                 this.folderUrl = folderUri;
 
-                new CloneRepoTask(gitRemoteAddress, FOLDER_NAME).execute();
+                new CloneRepoTask(gitRemoteAddress).execute();
 
 
 
@@ -195,231 +190,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void moveFilesToSaf(File sourceDir, Uri treeUri) {
-
-        Log.d(TAG, "Move Files to SAF");
-
-        DocumentFile pickedDir = DocumentFile.fromTreeUri(this, treeUri);
-
-        if (pickedDir != null) {
-            moveFilesRecursively(sourceDir, pickedDir);
-        }
-
-        Log.d(TAG, "Stop Moving Files to SAF");
-    }
-
-    private void moveFilesRecursively(File sourceDir, DocumentFile targetDir) {
-        if (sourceDir.isDirectory()) {
-            // For each file/subdirectory in the source directory
-            for (File file : sourceDir.listFiles()) {
-                Log.d(TAG, "copy " + file.getName());
-                if (file.isDirectory()) {
-                    if (file.getName().equals(".git")) {
-                        continue;
-                    }
-                    // Create the subdirectory in SAF target
-                    DocumentFile subDir = targetDir.findFile(file.getName());
-                    if (subDir == null) {
-                        subDir = targetDir.createDirectory(file.getName());
-                    }
-
-                    // Recursively move files into this subdirectory
-                    moveFilesRecursively(file, subDir);
-                } else {
-                    // Copy the file into the target directory
-                    copyFileToSaf(file, targetDir);
-                }
-            }
-        }
-    }
-
-    private void copyFileToSaf(File sourceFile, DocumentFile targetDir) {
-
-        try {
-            DocumentFile targetFile = targetDir.findFile(sourceFile.getName());
-            if (targetFile != null) {
-                //File targetFile = new File(targetDir, file.getName());
-                if (targetFile.exists() && isFileUnchangedBasedOnTime(sourceFile, targetFile)) {
-                    Log.d(TAG, "Skipping unchanged file: " + sourceFile.getAbsolutePath());
-                    return;
-                }
-
-                targetFile.delete(); // need to delete otherwise it creates a new file
-            }
-
-            // Create a new file in the SAF target directory
-            DocumentFile newFile = targetDir.createFile("application/octet-stream", sourceFile.getName());
-            if (newFile != null) {
-                try (InputStream in = new FileInputStream(sourceFile);
-                     OutputStream out = getContentResolver().openOutputStream(newFile.getUri())) {
-                    byte[] buffer = new byte[1024];
-                    int len;
-                    while ((len = in.read(buffer)) > 0) {
-                        out.write(buffer, 0, len);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void copyFromSaf(Uri treeUri, String destinationDirName) {
-        Log.d(TAG, "Move Files from SAF");
-        File destinationDir = new File(getCacheDir(), destinationDirName);
-        DocumentFile pickedDir = DocumentFile.fromTreeUri(this, treeUri);
-
-        if (pickedDir != null && pickedDir.isDirectory()) {
-            // Ensure the destination directory exists
-            if (!destinationDir.exists()) {
-                destinationDir.mkdirs();
-            }
-
-            // Recursively copy files from SAF to internal storage
-            copyFilesRecursivelyFromSaf(pickedDir, destinationDir);
-        } else {
-            Log.d(TAG, "Invalid SAF directory.");
-        }
-        Log.d(TAG, "Stop Moving Files from SAF");
-    }
-
-    private void copyFilesRecursivelyFromSaf(DocumentFile sourceDir, File targetDir) {
-        for (DocumentFile file : sourceDir.listFiles()) {
-            if (file.isDirectory()) {
-                if (file.getName().equals(".git")) {
-                    continue;
-                }
-
-                // Create a corresponding subdirectory in the target directory
-                File subDir = new File(targetDir, file.getName());
-                if (!subDir.exists()) {
-                    subDir.mkdirs();
-                }
-
-                // Recursively copy files in this subdirectory
-                copyFilesRecursivelyFromSaf(file, subDir);
-            } else if (file.isFile()) {
-                File targetFile = new File(targetDir, file.getName());
-                if (targetFile.exists() && isFileUnchangedBasedOnTime(file, targetFile)) {
-                    Log.d(TAG, "Skipping unchanged file: " + targetFile.getAbsolutePath());
-                    continue;
-                }
-
-                // Copy the file to the target directory
-                copyFileFromSaf(file, new File(targetDir, file.getName()));
-            }
-        }
-    }
-
-    private boolean isFileUnchangedBasedOnTime(DocumentFile sourceFile, File targetFile) {
-        // SAF doesn't provide a direct last-modified timestamp, so rely on metadata
-        long sourceLastModified = sourceFile.lastModified();
-        long targetLastModified = targetFile.lastModified();
-
-        if (sourceLastModified == 0 || targetLastModified == 0) {
-            return false; // Treat as changed if timestamps are unavailable
-        }
-
-        // If the source file's modification time is greater, the file has changed
-        return sourceLastModified <= targetLastModified;
-    }
-
-    private boolean isFileUnchangedBasedOnTime(File sourceFile,DocumentFile targetFile) {
-        // SAF doesn't provide a direct last-modified timestamp, so rely on metadata
-        long sourceLastModified = sourceFile.lastModified();
-        long targetLastModified = targetFile.lastModified();
-
-        if (sourceLastModified == 0 || targetLastModified == 0) {
-            Log.d(TAG, "source of target time is null");
-            return false; // Treat as changed if timestamps are unavailable
-        }
-
-        // If the source file's modification time is greater, the file has changed
-        return sourceLastModified <= targetLastModified;
-    }
-
-    private void copyFileFromSaf(DocumentFile sourceFile, File targetFile) {
-        try (InputStream in = getContentResolver().openInputStream(sourceFile.getUri());
-             OutputStream out = new FileOutputStream(targetFile)) {
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = in.read(buffer)) > 0) {
-                out.write(buffer, 0, len);
-            }
-            targetFile.setLastModified(sourceFile.lastModified());
-            Log.d(TAG, "Copied file: " + targetFile.getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void listRepositoryFilesByName(String repoDirName) {
-        File tempDir = new File(getCacheDir(), repoDirName);
-        listRepositoryFiles(tempDir);
-    }
-
-    private void listRepositoryFiles(File repoDir) {
-        if (repoDir.exists() && repoDir.isDirectory()) {
-            File[] files = repoDir.listFiles(); // Get all files and directories
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        Log.d(TAG, "Directory: " + file.getName());
-                        // Recursively list files in subdirectory
-                        listRepositoryFiles(file);
-                    } else {
-                        Log.d(TAG, "File: " + file.getName());
-                    }
-                }
-            }
-        } else {
-            Log.d(TAG, "The repository directory does not exist or is not a directory.");
-        }
-    }
-
-    private boolean deleteDirectoryRecursively(File directory) {
-        if (directory != null && directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (!deleteDirectoryRecursively(file)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return directory != null && directory.delete();
-    }
-
 
     private class CloneRepoTask extends AsyncTask<Void, Void, String> {
         private String repoUrl;
-        private String localDirName;
 
-        public CloneRepoTask(String repoUrl, String localDirName) {
+        public CloneRepoTask(String repoUrl) {
             this.repoUrl = repoUrl;
-            this.localDirName = localDirName;
         }
 
         @Override
         protected String doInBackground(Void... voids) {
             try {
-                Log.d(TAG, "Start Clone Repo");
-                //cloneRepository("https://github.com/maxistar/notes-md.git");
+                gitService.cloneRepository(MainActivity.this, FOLDER_NAME, repoUrl, gitRemoteUser, gitRemotePassword);
 
-                File tempDir = new File(getCacheDir(), this.localDirName);
-
-                Git.cloneRepository()
-                        .setURI(repoUrl)
-                        .setDirectory(tempDir)
-                        .setCredentialsProvider(new UsernamePasswordCredentialsProvider(gitRemoteUser, gitRemotePassword))
-                        .call();
-
-                Log.d(TAG, "Stop Clone Repo");
-
-                moveFilesToSaf(tempDir, folderUrl);
-
-                //listRepositoryFilesByName(this.localDirName);
+                fileStorageService.moveFilesToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
 
                 return "Repository cloned successfully!";
 
@@ -442,51 +226,11 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(Void... voids) {
             try {
 
-                copyFromSaf(folderUrl, FOLDER_NAME);
+                fileStorageService.copyFromSaf(MainActivity.this, folderUrl, FOLDER_NAME);
 
-                File tempDir = new File(getCacheDir(), FOLDER_NAME);
-                Git git = Git.open(tempDir);
+                gitService.syncRepository(MainActivity.this, FOLDER_NAME, gitRemoteUser, gitRemotePassword);
 
-                org.eclipse.jgit.api.Status status = git.status().call();
-
-                boolean hasChanges = !status.getUncommittedChanges().isEmpty() ||
-                        !status.getUntracked().isEmpty() ||
-                        !status.getModified().isEmpty() ||
-                        !status.getAdded().isEmpty() ||
-                        !status.getRemoved().isEmpty();
-
-                if (hasChanges) {
-                    git.
-                            add()
-                            .addFilepattern(".")
-                            .call();
-
-                    RevCommit commit = git.commit()
-                            .setMessage("commit message")
-                            .call();
-                }
-
-                git.pull()
-                        .setRebase(false)
-                        .setCredentialsProvider(new UsernamePasswordCredentialsProvider(gitRemoteUser, gitRemotePassword))
-                        .call();
-
-                if (hasChanges) {
-                git.
-                        add()
-                        .addFilepattern(".")
-                        .call();
-
-                RevCommit commit2 = git.commit()
-                        .setMessage("commit, fix conflicts")
-                        .call();
-
-                git.push()
-                        .setCredentialsProvider(new UsernamePasswordCredentialsProvider(gitRemoteUser, gitRemotePassword))
-                        .call();
-                }
-
-                moveFilesToSaf(tempDir, folderUrl);
+                fileStorageService.moveFilesToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
 
                 return "Files synchronized successfully!";
             } catch (Exception e) {
