@@ -37,8 +37,10 @@ public class FileStorageServiceTest {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         fileStorageService = new FileStorageService();
 
+
         // Set up source and destination directories
         sourceDir = new File(context.getCacheDir(), SOURCE_DIR_NAME);
+        fileStorageService.deleteDirectoryRecursively(context, sourceDir);
         sourceDir.mkdirs();
     }
 
@@ -182,6 +184,6 @@ public class FileStorageServiceTest {
     }
 
     private Uri getTestSafDirectoryUri() {
-        return Uri.parse("content://com.android.externalstorage.documents/tree/0CFA-3314%3ADocuments%2FTest01");
+        return Uri.parse("content://com.android.externalstorage.documents/tree/0CFA-3314%3ADocuments%2FTest03");
     }
 }

@@ -1,5 +1,7 @@
 package me.maxistar.gitsync;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -21,6 +23,8 @@ public class FileRegistry {
     private long localModificationTime; // Last modification time of the local file
     private long safModificationTime; // Last modification time of the SAF file
     private TreeMap<String, FileRegistry> files; // Subtree for folders
+
+    public static final String TAG = "GitSyncDebug";
 
     // Constructor
     public FileRegistry(String name, int type) {
@@ -89,10 +93,10 @@ public class FileRegistry {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try (FileWriter writer = new FileWriter(outputFile)) {
             gson.toJson(registry, writer);
-            System.out.println("Registry saved to: " + outputFile.getAbsolutePath());
+            Log.w(TAG, "Registry saved to: " + outputFile.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("Failed to save registry.");
+            Log.w(TAG, "Failed to save registry.");
         }
     }
 
@@ -102,8 +106,8 @@ public class FileRegistry {
             return gson.fromJson(reader, FileRegistry.class);
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("Failed to load registry.");
-            return null;
+            Log.w(TAG, "Failed to load registry.");
+            return new FileRegistry("", NODE_FOLDER);
         }
     }
 }

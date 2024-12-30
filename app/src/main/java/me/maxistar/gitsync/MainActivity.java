@@ -63,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         fileStorageService = new FileStorageService();
+        fileStorageService.loadRegistry(this);
+
         gitService = new GitService();
 
         setContentView(R.layout.activity_main);
