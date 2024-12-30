@@ -1,0 +1,190 @@
+package me.maxistar.gitsync;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.runner.RunWith;
+
+import android.content.Context;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Test;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+
+import android.net.Uri;
+import androidx.documentfile.provider.DocumentFile;
+import org.junit.After;
+
+@RunWith(AndroidJUnit4.class)
+public class FileStorageServiceTest {
+    public static final String SOURCE_DIR_NAME = "test-source";
+    private Context context;
+    private FileStorageService fileStorageService;
+    private File sourceDir;
+
+
+    @Before
+    public void setUp() throws IOException {
+        context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        fileStorageService = new FileStorageService();
+
+        // Set up source and destination directories
+        sourceDir = new File(context.getCacheDir(), SOURCE_DIR_NAME);
+        sourceDir.mkdirs();
+    }
+
+    public void createTestFile(File file, String content) throws IOException {
+        //if (file.getParentFile() != null && !file.getParentFile().exists()) {
+        //    file.getParentFile().mkdirs(); // Ensure parent directories exist
+        //}
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(content.getBytes());
+            System.out.println("File created: " + file.getAbsolutePath());
+        }
+    }
+
+    public void createTestFile(DocumentFile file, String content) throws IOException {
+        try (OutputStream fos = context.getContentResolver().openOutputStream(file.getUri())) {
+            if (fos != null) {
+                fos.write(content.getBytes());
+                System.out.println("File created: " + file.getUri());
+            } else {
+                System.out.println("Failed to create file: " + file.getName());
+            }
+        }
+    }
+
+    public String getFileContent(File file) throws IOException {
+        StringBuilder content = new StringBuilder();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        }
+
+        return content.toString().trim(); // Trim to remove the trailing newline
+    }
+
+    public String getFileContent(DocumentFile file) throws IOException {
+        StringBuilder content = new StringBuilder();
+
+        try (InputStream inputStream = context.getContentResolver().openInputStream(file.getUri());
+             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        }
+
+        return content.toString().trim(); // Trim to remove the trailing newline
+    }
+
+    @After
+    public void tearDown() {
+        // Clean up test directories
+        deleteDirectoryRecursively(sourceDir);
+
+        Uri safUri = createTestSafDirectory();
+        DocumentFile pickedDir = DocumentFile.fromTreeUri(context, safUri);
+        deleteDirectoryContent(pickedDir);
+    }
+
+    private void deleteDirectoryContent(DocumentFile directory) {
+        if (directory != null && directory.isDirectory()) {
+            for (DocumentFile file : directory.listFiles()) {
+                // Recursively delete files and subdirectories
+                if (!deleteDirectoryRecursively(file)) {
+                    return; // Stop if any deletion fails
+                }
+            }
+        }
+    }
+
+    private boolean deleteDirectoryRecursively(DocumentFile directory) {
+        if (directory != null && directory.isDirectory()) {
+            for (DocumentFile file : directory.listFiles()) {
+                // Recursively delete files and subdirectories
+                if (!deleteDirectoryRecursively(file)) {
+                    return false; // Stop if any deletion fails
+                }
+            }
+        }
+
+        // Delete the file or empty directory
+        return directory != null && directory.delete();
+    }
+
+    private void deleteDirectoryRecursively(File directory) {
+        if (directory != null && directory.isDirectory()) {
+            for (File file : directory.listFiles()) {
+                deleteDirectoryRecursively(file);
+            }
+        }
+        if (directory != null) {
+            directory.delete();
+        }
+    }
+
+    @Test
+    public void testMoveFilesToSaf() throws IOException {
+        // Simulate SAF directory
+        Uri safUri = createTestSafDirectory();
+
+        createTestFile(new File(sourceDir, "file1.txt"), "some contents");
+        createTestFile(new File(sourceDir, "file2.txt"), "some contents");
+        System.out.println("Created 2 files");
+
+
+
+        // Move files to SAF directory
+        fileStorageService.moveFilesToSaf(context, SOURCE_DIR_NAME, safUri);
+
+        // Verify that files were moved
+        DocumentFile safDirectory = DocumentFile.fromTreeUri(context, safUri);
+        assert safDirectory != null;
+        assert safDirectory.listFiles().length == 2; // Ensure all files moved
+    }
+
+    @Test
+    public void testMoveFilesToSaf2() throws IOException {
+        // Simulate SAF directory
+        Uri safUri = createTestSafDirectory();
+
+        DocumentFile pickedDir = DocumentFile.fromTreeUri(context, safUri);
+        DocumentFile newFile = pickedDir.createFile("application/octet-stream", "filename1");
+        createTestFile(newFile, "some file content");
+
+        DocumentFile newFile2 = pickedDir.createFile("application/octet-stream", "filename2");
+        createTestFile(newFile2, "some file content");
+
+        // createTestFile(new DocumentFile(sourceDir, "file1.txt"), "some contents");
+        // createTestFile(new File(sourceDir, "file2.txt"), "some contents");
+        System.out.println("Created 2 files");
+
+
+
+        // Move files to SAF directory
+        fileStorageService.copyFromSaf(context, safUri, SOURCE_DIR_NAME);
+
+        // Verify that files were moved
+        DocumentFile safDirectory = DocumentFile.fromTreeUri(context, safUri);
+        // assert safDirectory != null;
+        assert sourceDir.listFiles().length == 2; // Ensure all files moved
+    }
+
+    private Uri createTestSafDirectory() {
+        return Uri.parse("content://com.android.externalstorage.documents/tree/0CFA-3314%3ADocuments%2FTest01");
+    }
+}

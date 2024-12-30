@@ -33,6 +33,25 @@ public class FileStorageService {
         Log.d(TAG, "Stop Moving Files to SAF");
     }
 
+    public void copyFromSaf(Context context, Uri treeUri, String destinationDirName) {
+        Log.d(TAG, "Move Files from SAF");
+        File destinationDir = new File(context.getCacheDir(), destinationDirName);
+        DocumentFile pickedDir = DocumentFile.fromTreeUri(context, treeUri);
+
+        if (pickedDir != null && pickedDir.isDirectory()) {
+            // Ensure the destination directory exists
+            if (!destinationDir.exists()) {
+                destinationDir.mkdirs();
+            }
+
+            // Recursively copy files from SAF to internal storage
+            copyFilesRecursivelyFromSaf(context, pickedDir, destinationDir);
+        } else {
+            Log.d(TAG, "Invalid SAF directory.");
+        }
+        Log.d(TAG, "Stop Moving Files from SAF");
+    }
+
     private void moveFilesRecursively(Context context, File sourceDir, DocumentFile targetDir) {
         if (sourceDir.isDirectory()) {
             // For each file/subdirectory in the source directory
@@ -91,24 +110,7 @@ public class FileStorageService {
 
 
 
-    public void copyFromSaf(Context context, Uri treeUri, String destinationDirName) {
-        Log.d(TAG, "Move Files from SAF");
-        File destinationDir = new File(context.getCacheDir(), destinationDirName);
-        DocumentFile pickedDir = DocumentFile.fromTreeUri(context, treeUri);
 
-        if (pickedDir != null && pickedDir.isDirectory()) {
-            // Ensure the destination directory exists
-            if (!destinationDir.exists()) {
-                destinationDir.mkdirs();
-            }
-
-            // Recursively copy files from SAF to internal storage
-            copyFilesRecursivelyFromSaf(context, pickedDir, destinationDir);
-        } else {
-            Log.d(TAG, "Invalid SAF directory.");
-        }
-        Log.d(TAG, "Stop Moving Files from SAF");
-    }
 
     private void copyFilesRecursivelyFromSaf(Context context, DocumentFile sourceDir, File targetDir) {
         for (DocumentFile file : sourceDir.listFiles()) {
@@ -217,4 +219,7 @@ public class FileStorageService {
         }
         return directory != null && directory.delete();
     }
+
+
+
 }
