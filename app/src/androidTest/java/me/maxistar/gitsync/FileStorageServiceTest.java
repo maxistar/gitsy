@@ -35,7 +35,7 @@ public class FileStorageServiceTest {
     @Before
     public void setUp() throws IOException {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        fileStorageService = new FileStorageService();
+        fileStorageService = new FileStorageService("test-registry.json");
 
 
         // Set up source and destination directories

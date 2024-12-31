@@ -24,7 +24,10 @@ public class MainActivity extends AppCompatActivity {
     public static final String GIT_REMOTE_USER = "git_remote_user";
     public static final String GIT_REMOTE_PASSWORD = "git_remote_password";
     public static final String TAG = "GitSyncDebug";
-    final String FOLDER_NAME = "temp-repo7";
+    final String FOLDER_NAME = "temp-repo";
+
+    static final String REGISTRY_JSON = "registry.json";
+
     Uri folderUrl;
 
     boolean isSynchronizing = false;
@@ -62,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        fileStorageService = new FileStorageService();
+        fileStorageService = new FileStorageService(REGISTRY_JSON);
         fileStorageService.loadRegistry(this);
 
         gitService = new GitService();

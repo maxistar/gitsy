@@ -15,7 +15,7 @@ public class FileRegistry {
 
     public static final int NODE_FILE = 0;
 
-    public static final int NODE_FOLDER = 0;
+    public static final int NODE_FOLDER = 1;
 
     private String name; // Name of the file or folder
     private int type; // "file" or "folder"
