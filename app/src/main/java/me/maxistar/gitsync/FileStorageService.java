@@ -56,21 +56,21 @@ public class FileStorageService {
     public void copyFromSaf(Context context, Uri treeUri, String destinationDirName) {
         Log.d(TAG, "Move Files from SAF");
         File destinationDir = new File(context.getCacheDir(), destinationDirName);
-        DocumentFile pickedDir = DocumentFile.fromTreeUri(context, treeUri);
+        //DocumentFile pickedDir = DocumentFile.fromTreeUri(context, treeUri);
 
-        if (pickedDir != null && pickedDir.isDirectory()) {
+        //if (pickedDir != null && pickedDir.isDirectory()) {
             // Ensure the destination directory exists
-            if (!destinationDir.exists()) {
-                destinationDir.mkdirs();
-            }
+        //    if (!destinationDir.exists()) {
+        //        destinationDir.mkdirs();
+        //    }
 
             // Recursively copy files from SAF to internal storage
-            transferChangesRecursivelyFromSaf(context, pickedDir, destinationDir, localRegistry.getFiles());
+            transferChangesRecursivelyFromSaf(context, treeUri, destinationDir, localRegistry.getFiles());
 
             saveLocalRegistry(context);
-        } else {
-            Log.d(TAG, "Invalid SAF directory.");
-        }
+        //} else {
+        //    Log.d(TAG, "Invalid SAF directory.");
+        //}
         Log.d(TAG, "Stop Moving Files from SAF");
     }
 
@@ -145,15 +145,17 @@ public class FileStorageService {
     }
 
 
-    private void transferChangesRecursivelyFromSaf(Context context, DocumentFile sourceDir, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
-        DocumentFile[] files = sourceDir.listFiles();
+    private void transferChangesRecursivelyFromSaf(Context context, Uri sourceDir, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
+
+        // DocumentFile[] files = sourceDir.listFiles();
+        FileInfo[] files = FileUtils.listFilesInFolder(context, sourceDir).toArray(new FileInfo[0]);
 
         //DocumentFile[] files = Arrays.stream(filesRaw)
         //        .filter(file -> !".git".equals(file.getName()))
         //        .toArray(DocumentFile[]::new);
 
         // sort files
-        Arrays.sort(files, Comparator.comparing(DocumentFile::getName));
+        // Arrays.sort(files, Comparator.comparing(DocumentFile::getName));
 
         FileRegistry[] registry = filesRegistryMap.values().toArray(new FileRegistry[0]);
         int i = 0;
@@ -172,9 +174,9 @@ public class FileStorageService {
                 i++;
                 continue;
             }
-            if (!registry[i].getName().equals(files[j].getName())) {
+            if (!registry[i].getName().equals(files[j].getFileName())) {
                 // to decide later add of remove
-                if (registry[i].getName().compareTo(files[j].getName()) > 0) {
+                if (registry[i].getName().compareTo(files[j].getFileName()) > 0) {
                     handleAddingFromSaf(context, files[j], targetDir, filesRegistryMap);
                 } else {
                     handleRemovingFromSaf(registry[i].getName(), targetDir, filesRegistryMap);
@@ -189,8 +191,8 @@ public class FileStorageService {
         }
     }
 
-    private void handleAddingFromSaf(Context context, DocumentFile file, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
-        String filename = file.getName();
+    private void handleAddingFromSaf(Context context, FileInfo file, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
+        String filename = file.getFileName();
         if (".git".equals(filename)) {
             return;
         }
@@ -200,7 +202,7 @@ public class FileStorageService {
             fileInfo = new FileRegistry(filename, FileRegistry.NODE_FOLDER);
             // should we put it inside?
             targetFile.mkdir();
-            transferChangesRecursivelyFromSaf(context, file, targetFile, fileInfo.getFiles());
+            transferChangesRecursivelyFromSaf(context, file.getUri(), targetFile, fileInfo.getFiles());
         } else {
             fileInfo = new FileRegistry(filename, FileRegistry.NODE_FILE);
             copyFileFromSaf(context, file, targetFile, fileInfo);
@@ -218,7 +220,7 @@ public class FileStorageService {
         filesRegistryMap.remove(filename);
     }
 
-    private void handleChangesFromSaf(Context context, DocumentFile file, File targetDir, FileRegistry fileInfo) {
+    private void handleChangesFromSaf(Context context, FileInfo file, File targetDir, FileRegistry fileInfo) {
         String filename = fileInfo.getName();
         if (".git".equals(filename)) {
             return;
@@ -227,7 +229,7 @@ public class FileStorageService {
         if (fileInfo.getType() == FileRegistry.NODE_FOLDER) {
             // Create a corresponding subdirectory in the target directory
             // Recursively copy files in this subdirectory
-            transferChangesRecursivelyFromSaf(context, file, targetFile, fileInfo.getFiles());
+            transferChangesRecursivelyFromSaf(context, file.getUri(), targetFile, fileInfo.getFiles());
         } else if (file.isFile()) {
             if (isFileUnchangedBasedOnStoredLocalTime(file, fileInfo)) {
                 // Log.d(TAG, "Skipping unchanged file: " + targetFile.getAbsolutePath());
@@ -239,12 +241,12 @@ public class FileStorageService {
         }
     }
 
-    private boolean isFileUnchangedBasedOnStoredLocalTime(DocumentFile sourceFile, FileRegistry targetFile) {
-        if (sourceFile.length() != targetFile.getSize()) {
+    private boolean isFileUnchangedBasedOnStoredLocalTime(FileInfo sourceFile, FileRegistry targetFile) {
+        if (sourceFile.getSize() != targetFile.getSize()) {
             return false;
         }
         // SAF doesn't provide a direct last-modified timestamp, so rely on metadata
-        long sourceLastModified = sourceFile.lastModified();
+        long sourceLastModified = sourceFile.getModificationTime();
         long targetLastModified = targetFile.getLocalModificationTime();
 
         if (sourceLastModified == 0 || targetLastModified == 0) {
@@ -271,7 +273,7 @@ public class FileStorageService {
         return sourceLastModified != targetLastModified;
     }
 
-    private void copyFileFromSaf(Context context, DocumentFile sourceFile, File targetFile, FileRegistry fileInfo) {
+    private void copyFileFromSaf(Context context, FileInfo sourceFile, File targetFile, FileRegistry fileInfo) {
         try (InputStream in = context.getContentResolver().openInputStream(sourceFile.getUri());
              OutputStream out = new FileOutputStream(targetFile)) {
             byte[] buffer = new byte[1024];
@@ -284,7 +286,7 @@ public class FileStorageService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        fileInfo.setSafModificationTime(sourceFile.lastModified());
+        fileInfo.setSafModificationTime(sourceFile.getModificationTime());
         fileInfo.setLocalModificationTime(targetFile.lastModified());
         fileInfo.setSize(targetFile.length());
     }
