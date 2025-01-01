@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,11 +17,16 @@ public class FileUtils {
         List<FileInfo> fileInfos = new ArrayList<>();
 
         ContentResolver resolver = context.getContentResolver();
+        // String parentDocumentId = DocumentsContract.getTreeDocumentId(folderUri);
+        //DocumentFile file = DocumentFile.fromTreeUri(context, folderUri);
+        //Uri
 
-        // Query parameters
+        String folderDocumentId = DocumentsContract.getDocumentId(folderUri);
+
+        // Construct the URI for the folder's children
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
                 folderUri,
-                DocumentsContract.getTreeDocumentId(folderUri)
+                folderDocumentId
         );
 
         String[] projection = new String[]{
@@ -54,26 +61,21 @@ public class FileUtils {
 
                     // Determine file type
                     int fileType;
-                    Uri documentUri;
+
                     if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType)) {
                         fileType = FileInfo.TYPE_DIRECTORY; // Directory
-                        documentUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-                                folderUri,
-                                documentId
-                        );
+
                     } else if (mimeType != null && mimeType.startsWith("application/") || mimeType.startsWith("text/")) {
                         fileType = FileInfo.TYPE_FILE; // File
-                        documentUri = DocumentsContract.buildDocumentUriUsingTree(
-                                folderUri,
-                                documentId
-                        );
                     } else {
                         fileType = FileInfo.TYPE_OTHER; // Other
-                        documentUri = DocumentsContract.buildDocumentUriUsingTree(
-                                folderUri,
-                                documentId
-                        );
                     }
+
+                    Uri documentUri = DocumentsContract.buildDocumentUriUsingTree(
+                            folderUri,
+                            documentId
+                    );
+
 
                     // Build document URI
 

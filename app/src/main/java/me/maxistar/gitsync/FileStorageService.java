@@ -2,6 +2,7 @@ package me.maxistar.gitsync;
 
 import android.content.Context;
 import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
@@ -56,26 +57,24 @@ public class FileStorageService {
     public void copyFromSaf(Context context, Uri treeUri, String destinationDirName) {
         Log.d(TAG, "Move Files from SAF");
         File destinationDir = new File(context.getCacheDir(), destinationDirName);
-        //DocumentFile pickedDir = DocumentFile.fromTreeUri(context, treeUri);
 
-        //if (pickedDir != null && pickedDir.isDirectory()) {
-            // Ensure the destination directory exists
-        //    if (!destinationDir.exists()) {
-        //        destinationDir.mkdirs();
-        //    }
+        // Query parameters
+        String documentId = DocumentsContract.getTreeDocumentId(treeUri);
+        Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+                treeUri,
+                documentId
+        );
 
-            // Recursively copy files from SAF to internal storage
-            transferChangesRecursivelyFromSaf(context, treeUri, destinationDir, localRegistry.getFiles());
+        // Recursively copy files from SAF to internal storage
+        transferChangesRecursivelyFromSaf(context, childrenUri, destinationDir, localRegistry.getFiles());
+        saveLocalRegistry(context);
 
-            saveLocalRegistry(context);
-        //} else {
-        //    Log.d(TAG, "Invalid SAF directory.");
-        //}
         Log.d(TAG, "Stop Moving Files from SAF");
     }
 
     private void transferChangesRecursivelyToSaf(Context context, File sourceDir, DocumentFile targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
-        //Log.d(TAG, "List Files");
+
+        // Log.d(TAG, "List Files");
         File[] files = sourceDir.listFiles();
         //Log.d(TAG, "Stop List Files");
         // For each file/subdirectory in the source directory
@@ -147,21 +146,18 @@ public class FileStorageService {
 
     private void transferChangesRecursivelyFromSaf(Context context, Uri sourceDir, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
 
-        // DocumentFile[] files = sourceDir.listFiles();
         FileInfo[] files = FileUtils.listFilesInFolder(context, sourceDir).toArray(new FileInfo[0]);
 
-        //DocumentFile[] files = Arrays.stream(filesRaw)
-        //        .filter(file -> !".git".equals(file.getName()))
-        //        .toArray(DocumentFile[]::new);
-
-        // sort files
-        // Arrays.sort(files, Comparator.comparing(DocumentFile::getName));
+        Arrays.sort(files, Comparator.comparing(FileInfo::getFileName));
 
         FileRegistry[] registry = filesRegistryMap.values().toArray(new FileRegistry[0]);
+
+        Arrays.sort(registry, Comparator.comparing(FileRegistry::getName));
+
         int i = 0;
         int j = 0;
 
-        while(i < registry.length || j < files.length) {
+        while (i < registry.length || j < files.length) {
             if (i == registry.length) {
                 // add a new file
                 handleAddingFromSaf(context, files[j], targetDir, filesRegistryMap);
@@ -304,6 +300,7 @@ public class FileStorageService {
         }
         return directory != null && directory.delete();
     }
+
     public void deleteDirectoryRecursivelyAndSaveRegistry(Context context, File directory) {
         deleteDirectoryRecursively(directory);
         // create a new empty registry and store it

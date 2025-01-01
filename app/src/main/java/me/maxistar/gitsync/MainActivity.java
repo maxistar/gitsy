@@ -272,9 +272,9 @@ public class MainActivity extends AppCompatActivity {
 
                 fileStorageService.copyFromSaf(MainActivity.this, folderUrl, FOLDER_NAME);
 
-                // gitService.syncRepository(MainActivity.this, FOLDER_NAME, gitRemoteUser, gitRemotePassword);
+                gitService.syncRepository(MainActivity.this, FOLDER_NAME, gitRemoteUser, gitRemotePassword);
 
-                // fileStorageService.copyToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
+                fileStorageService.copyToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
 
                 return "Files synchronized successfully!";
             } catch (Exception e) {
