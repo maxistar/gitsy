@@ -58,7 +58,15 @@ public class GitService {
                 .setCredentialsProvider(new UsernamePasswordCredentialsProvider(gitRemoteUser, gitRemotePassword))
                 .call();
 
-        if (hasChanges) {
+
+        status = git.status().call();
+        boolean hasChangesAfterPull = !status.getUncommittedChanges().isEmpty() ||
+                !status.getUntracked().isEmpty() ||
+                !status.getModified().isEmpty() ||
+                !status.getAdded().isEmpty() ||
+                !status.getRemoved().isEmpty();
+
+        if (hasChangesAfterPull) {
             git.
                     add()
                     .addFilepattern(".")
@@ -68,6 +76,10 @@ public class GitService {
                     .setMessage("commit, fix conflicts")
                     .call();
 
+            git.push()
+                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(gitRemoteUser, gitRemotePassword))
+                    .call();
+        } else {
             git.push()
                     .setCredentialsProvider(new UsernamePasswordCredentialsProvider(gitRemoteUser, gitRemotePassword))
                     .call();
