@@ -20,6 +20,7 @@ import java.util.TreeMap;
 public class FileStorageService {
 
     public static final String TAG = "GitSyncDebug";
+    public static final int BUFFER_SIZE = 1024;
 
     private FileRegistry localRegistry;
 
@@ -187,7 +188,7 @@ public class FileStorageService {
             if (newFile != null) {
                 try (InputStream in = new FileInputStream(sourceFile);
                      OutputStream out = context.getContentResolver().openOutputStream(newFile.getUri())) {
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[BUFFER_SIZE];
                     int len;
                     while ((len = in.read(buffer)) > 0) {
                         out.write(buffer, 0, len);
@@ -195,7 +196,6 @@ public class FileStorageService {
                 }
                 fileInfo.setSafModificationTime(newFile.lastModified());
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -330,7 +330,7 @@ public class FileStorageService {
     private void copyFileFromSaf(Context context, FileInfo sourceFile, File targetFile, FileRegistry fileInfo) {
         try (InputStream in = context.getContentResolver().openInputStream(sourceFile.getUri());
              OutputStream out = new FileOutputStream(targetFile)) {
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[BUFFER_SIZE];
             int len;
             while ((len = in.read(buffer)) > 0) {
                 out.write(buffer, 0, len);

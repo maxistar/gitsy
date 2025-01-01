@@ -45,10 +45,6 @@ public class FileStorageServiceTest {
     }
 
     public void createTestFile(File file, String content) throws IOException {
-        //if (file.getParentFile() != null && !file.getParentFile().exists()) {
-        //    file.getParentFile().mkdirs(); // Ensure parent directories exist
-        //}
-
         try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(content.getBytes());
             System.out.println("File created: " + file.getAbsolutePath());
