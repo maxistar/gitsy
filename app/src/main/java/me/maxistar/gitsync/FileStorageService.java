@@ -12,6 +12,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.TreeMap;
 
 public class FileStorageService {
@@ -37,7 +39,7 @@ public class FileStorageService {
         FileRegistry.saveRegistryToFile(localRegistry, localDir);
     }
 
-    public void copyFilesToSaf(Context context, String sourceDirName, Uri treeUri) {
+    public void copyToSaf(Context context, String sourceDirName, Uri treeUri) {
 
         Log.d(TAG, "Move Files to SAF");
 
@@ -45,7 +47,7 @@ public class FileStorageService {
 
         DocumentFile pickedDir = DocumentFile.fromTreeUri(context, treeUri);
 
-        moveFilesRecursivelyToSaf(context, sourceDir, pickedDir, localRegistry.getFiles());
+        transferChangesRecursivelyToSaf(context, sourceDir, pickedDir, localRegistry.getFiles());
         saveLocalRegistry(context);
 
         Log.d(TAG, "Stop Moving Files to SAF");
@@ -63,7 +65,7 @@ public class FileStorageService {
             }
 
             // Recursively copy files from SAF to internal storage
-            copyFilesRecursivelyFromSaf(context, pickedDir, destinationDir, localRegistry.getFiles());
+            transferChangesRecursivelyFromSaf(context, pickedDir, destinationDir, localRegistry.getFiles());
 
             saveLocalRegistry(context);
         } else {
@@ -72,7 +74,7 @@ public class FileStorageService {
         Log.d(TAG, "Stop Moving Files from SAF");
     }
 
-    private void moveFilesRecursivelyToSaf(Context context, File sourceDir, DocumentFile targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
+    private void transferChangesRecursivelyToSaf(Context context, File sourceDir, DocumentFile targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
         //Log.d(TAG, "List Files");
         File[] files = sourceDir.listFiles();
         //Log.d(TAG, "Stop List Files");
@@ -95,7 +97,7 @@ public class FileStorageService {
                     subDir = targetDir.findFile(filename);
                 }
                 // Recursively move files into this subdirectory
-                moveFilesRecursivelyToSaf(context, file, subDir, subDirInfo.getFiles());
+                transferChangesRecursivelyToSaf(context, file, subDir, subDirInfo.getFiles());
             } else {
                 // Copy the file into the target directory
                 // DocumentFile targetFile = targetDir.findFile(filename);
@@ -143,39 +145,97 @@ public class FileStorageService {
     }
 
 
-    private void copyFilesRecursivelyFromSaf(Context context, DocumentFile sourceDir, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
-        //Log.d(TAG, "List Files");
+    private void transferChangesRecursivelyFromSaf(Context context, DocumentFile sourceDir, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
         DocumentFile[] files = sourceDir.listFiles();
-        //Log.d(TAG, "Stop List Files");
-        for (DocumentFile file : files) {
-            String filename = file.getName();
-            if (filename.equals(".git")) {
+
+        //DocumentFile[] files = Arrays.stream(filesRaw)
+        //        .filter(file -> !".git".equals(file.getName()))
+        //        .toArray(DocumentFile[]::new);
+
+        // sort files
+        Arrays.sort(files, Comparator.comparing(DocumentFile::getName));
+
+        FileRegistry[] registry = filesRegistryMap.values().toArray(new FileRegistry[0]);
+        int i = 0;
+        int j = 0;
+
+        while(i < registry.length || j < files.length) {
+            if (i == registry.length) {
+                // add a new file
+                handleAddingFromSaf(context, files[j], targetDir, filesRegistryMap);
+                j++;
                 continue;
             }
-            FileRegistry fileInfo = filesRegistryMap.get(filename);
-            File targetFile = new File(targetDir, filename);
-            if (fileInfo == null) {
-                if (file.isDirectory()) {
-                    fileInfo = new FileRegistry(filename, FileRegistry.NODE_FOLDER);
-                    targetFile.mkdirs();
+            if (j == files.length) {
+                // remove file
+                handleRemovingFromSaf(registry[i].getName(), targetDir, filesRegistryMap);
+                i++;
+                continue;
+            }
+            if (!registry[i].getName().equals(files[j].getName())) {
+                // to decide later add of remove
+                if (registry[i].getName().compareTo(files[j].getName()) > 0) {
+                    handleAddingFromSaf(context, files[j], targetDir, filesRegistryMap);
                 } else {
-                    fileInfo = new FileRegistry(filename, FileRegistry.NODE_FILE);
+                    handleRemovingFromSaf(registry[i].getName(), targetDir, filesRegistryMap);
                 }
-                filesRegistryMap.put(filename, fileInfo);
+                j++;
+                continue;
+            }
+            // apply changes fo current file of directory if any
+            handleChangesFromSaf(context, files[j], targetDir, registry[i]);
+            j++;
+            i++;
+        }
+    }
 
+    private void handleAddingFromSaf(Context context, DocumentFile file, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
+        String filename = file.getName();
+        if (".git".equals(filename)) {
+            return;
+        }
+        File targetFile = new File(targetDir, filename);
+        FileRegistry fileInfo;
+        if (file.isDirectory()) {
+            fileInfo = new FileRegistry(filename, FileRegistry.NODE_FOLDER);
+            // should we put it inside?
+            targetFile.mkdir();
+            transferChangesRecursivelyFromSaf(context, file, targetFile, fileInfo.getFiles());
+        } else {
+            fileInfo = new FileRegistry(filename, FileRegistry.NODE_FILE);
+            copyFileFromSaf(context, file, targetFile, fileInfo);
+        }
+        filesRegistryMap.put(filename, fileInfo);
+    }
+
+    private void handleRemovingFromSaf(String filename, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
+        File targetFile = new File(targetDir, filename);
+        if (targetFile.isDirectory()) {
+            deleteDirectoryRecursively(targetFile);
+        } else {
+            targetFile.delete();
+        }
+        filesRegistryMap.remove(filename);
+    }
+
+    private void handleChangesFromSaf(Context context, DocumentFile file, File targetDir, FileRegistry fileInfo) {
+        String filename = fileInfo.getName();
+        if (".git".equals(filename)) {
+            return;
+        }
+        File targetFile = new File(targetDir, filename);
+        if (fileInfo.getType() == FileRegistry.NODE_FOLDER) {
+            // Create a corresponding subdirectory in the target directory
+            // Recursively copy files in this subdirectory
+            transferChangesRecursivelyFromSaf(context, file, targetFile, fileInfo.getFiles());
+        } else if (file.isFile()) {
+            if (isFileUnchangedBasedOnStoredLocalTime(file, fileInfo)) {
+                // Log.d(TAG, "Skipping unchanged file: " + targetFile.getAbsolutePath());
+                // no changed needed
+                return;
             }
-            if (fileInfo.getType() == FileRegistry.NODE_FOLDER) {
-                // Create a corresponding subdirectory in the target directory
-                // Recursively copy files in this subdirectory
-                copyFilesRecursivelyFromSaf(context, file, targetFile, fileInfo.getFiles());
-            } else if (file.isFile()) {
-                if (isFileUnchangedBasedOnStoredLocalTime(file, fileInfo)) {
-                    //Log.d(TAG, "Skipping unchanged file: " + targetFile.getAbsolutePath());
-                    continue;
-                }
-                // Copy the file to the target directory
-                copyFileFromSaf(context, file, targetFile, fileInfo);
-            }
+            // Copy the file to the target directory
+            copyFileFromSaf(context, file, targetFile, fileInfo);
         }
     }
 
@@ -229,23 +289,23 @@ public class FileStorageService {
         fileInfo.setSize(targetFile.length());
     }
 
-    public boolean deleteDirectoryRecursively(Context context, File directory) {
+    public boolean deleteDirectoryRecursively(File directory) {
         if (directory != null && directory.isDirectory()) {
             File[] files = directory.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (!deleteDirectoryRecursively(context, file)) {
+                    if (!deleteDirectoryRecursively(file)) {
                         return false;
                     }
                 }
             }
         }
-
+        return directory != null && directory.delete();
+    }
+    public void deleteDirectoryRecursivelyAndSaveRegistry(Context context, File directory) {
+        deleteDirectoryRecursively(directory);
         // create a new empty registry and store it
         localRegistry = new FileRegistry("", FileRegistry.NODE_FOLDER);
         saveLocalRegistry(context);
-
-        return directory != null && directory.delete();
-
     }
 }

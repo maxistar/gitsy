@@ -40,7 +40,7 @@ public class FileStorageServiceTest {
 
         // Set up source and destination directories
         sourceDir = new File(context.getCacheDir(), SOURCE_DIR_NAME);
-        fileStorageService.deleteDirectoryRecursively(context, sourceDir);
+        fileStorageService.deleteDirectoryRecursivelyAndSaveRegistry(context, sourceDir);
         sourceDir.mkdirs();
     }
 
@@ -96,7 +96,7 @@ public class FileStorageServiceTest {
     @After
     public void tearDown() {
         // Clean up test directories
-        deleteDirectoryRecursively(sourceDir);
+        deleteDirectoryRecursivelyAndSaveRegistry(sourceDir);
 
         Uri safUri = getTestSafDirectoryUri();
         DocumentFile pickedDir = DocumentFile.fromTreeUri(context, safUri);
@@ -107,18 +107,18 @@ public class FileStorageServiceTest {
         if (directory != null && directory.isDirectory()) {
             for (DocumentFile file : directory.listFiles()) {
                 // Recursively delete files and subdirectories
-                if (!deleteDirectoryRecursively(file)) {
+                if (!deleteDirectoryRecursivelyAndSaveRegistry(file)) {
                     return; // Stop if any deletion fails
                 }
             }
         }
     }
 
-    private boolean deleteDirectoryRecursively(DocumentFile directory) {
+    private boolean deleteDirectoryRecursivelyAndSaveRegistry(DocumentFile directory) {
         if (directory != null && directory.isDirectory()) {
             for (DocumentFile file : directory.listFiles()) {
                 // Recursively delete files and subdirectories
-                if (!deleteDirectoryRecursively(file)) {
+                if (!deleteDirectoryRecursivelyAndSaveRegistry(file)) {
                     return false; // Stop if any deletion fails
                 }
             }
@@ -128,10 +128,10 @@ public class FileStorageServiceTest {
         return directory != null && directory.delete();
     }
 
-    private void deleteDirectoryRecursively(File directory) {
+    private void deleteDirectoryRecursivelyAndSaveRegistry(File directory) {
         if (directory != null && directory.isDirectory()) {
             for (File file : directory.listFiles()) {
-                deleteDirectoryRecursively(file);
+                deleteDirectoryRecursivelyAndSaveRegistry(file);
             }
         }
         if (directory != null) {
@@ -140,7 +140,7 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    public void testCopyFilesToSaf() throws IOException {
+    public void testCopyToSaf() throws IOException {
         Uri safUri = getTestSafDirectoryUri();
 
         createTestFile(new File(sourceDir, "file1.txt"), "some contents");
@@ -151,7 +151,7 @@ public class FileStorageServiceTest {
         System.out.println("Created 2 files");
 
         // Move files to SAF directory
-        fileStorageService.copyFilesToSaf(context, SOURCE_DIR_NAME, safUri);
+        fileStorageService.copyToSaf(context, SOURCE_DIR_NAME, safUri);
 
         // Verify that files were moved
         DocumentFile safDirectory = DocumentFile.fromTreeUri(context, safUri);
@@ -160,7 +160,7 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    public void testCopyFilesFromSaf() throws IOException {
+    public void testCopyFromSaf() throws IOException {
         Uri safUri = getTestSafDirectoryUri();
 
         DocumentFile pickedDir = DocumentFile.fromTreeUri(context, safUri);
