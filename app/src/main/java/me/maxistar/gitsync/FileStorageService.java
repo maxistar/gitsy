@@ -45,10 +45,8 @@ public class FileStorageService {
 
         DocumentFile pickedDir = DocumentFile.fromTreeUri(context, treeUri);
 
-        if (pickedDir != null) {
-            moveFilesRecursively(context, sourceDir, pickedDir, localRegistry.getFiles());
-            saveLocalRegistry(context);
-        }
+        moveFilesRecursivelyToSaf(context, sourceDir, pickedDir, localRegistry.getFiles());
+        saveLocalRegistry(context);
 
         Log.d(TAG, "Stop Moving Files to SAF");
     }
@@ -74,7 +72,7 @@ public class FileStorageService {
         Log.d(TAG, "Stop Moving Files from SAF");
     }
 
-    private void moveFilesRecursively(Context context, File sourceDir, DocumentFile targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
+    private void moveFilesRecursivelyToSaf(Context context, File sourceDir, DocumentFile targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
         //Log.d(TAG, "List Files");
         File[] files = sourceDir.listFiles();
         //Log.d(TAG, "Stop List Files");
@@ -97,7 +95,7 @@ public class FileStorageService {
                     subDir = targetDir.findFile(filename);
                 }
                 // Recursively move files into this subdirectory
-                moveFilesRecursively(context, file, subDir, subDirInfo.getFiles());
+                moveFilesRecursivelyToSaf(context, file, subDir, subDirInfo.getFiles());
             } else {
                 // Copy the file into the target directory
                 // DocumentFile targetFile = targetDir.findFile(filename);
@@ -198,7 +196,6 @@ public class FileStorageService {
     }
 
     private boolean isFileUnchangedBasedOnRegistrySafTime(File sourceFile, FileRegistry targetFile) {
-        // SAF doesn't provide a direct last-modified timestamp, so rely on metadata
         if (sourceFile.length() != targetFile.getSize()) {
             return false;
         }
