@@ -45,6 +45,7 @@ public class GitService {
             git.
                     add()
                     .addFilepattern(".")
+                    .setUpdate(true)
                     .call();
 
             RevCommit commit = git.commit()
