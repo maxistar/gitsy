@@ -5,17 +5,23 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.menu.MenuBuilder;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -138,8 +144,44 @@ public class MainActivity extends AppCompatActivity {
         openFolderPicker(REQUEST_CODE_OPEN_DIRECTORY);
     }
 
-    void showBoutBox() {
-        //
+    void showAboutBox() {
+        // Inflate the dialog layout
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_about_box, null);
+
+        String versionName = "1.0.0"; // Default value in case version retrieval fails
+        try {
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            versionName = packageInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        // Set app info text with the version
+        TextView appInfo = dialogView.findViewById(R.id.app_info);
+        appInfo.setText("Android GitSync\nVersion " + versionName);
+
+        // Create and show the dialog
+        AlertDialog aboutDialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setTitle("About")
+                .setPositiveButton("Close", (dialog, which) -> dialog.dismiss())
+                .create();
+
+        // Set click listeners for links
+        TextView termsAndConditions = dialogView.findViewById(R.id.terms_and_conditions);
+        TextView appWebsite = dialogView.findViewById(R.id.app_website);
+
+        termsAndConditions.setOnClickListener(v -> {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com/terms"));
+            startActivity(browserIntent);
+        });
+
+        appWebsite.setOnClickListener(v -> {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com"));
+            startActivity(browserIntent);
+        });
+
+        aboutDialog.show();
     }
 
     @SuppressLint("RestrictedApi")
@@ -169,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (itemId == R.id.menu_sync) {
             syncRepository();
         } else if (itemId == R.id.menu_about) {
-            showBoutBox();
+            showAboutBox();
         } else if (itemId == R.id.menu_reset_repo) {
             clearRepository();
         }

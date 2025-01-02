@@ -3,4 +3,5 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="colorIcon">#7F7F7F</color>
+    <color name="link_color">#007BFF</color>
 </resources>
