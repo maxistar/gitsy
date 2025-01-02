@@ -31,17 +31,17 @@ public class MainActivity extends AppCompatActivity {
 
     static final String REGISTRY_JSON = "registry.json";
 
-    Uri folderUrl;
+    static Uri folderUrl;
 
-    boolean isSynchronizing = false;
+    static boolean isSynchronizing = false;
 
-    boolean isCloning = false;
+    static boolean isCloning = false;
 
-    String gitRemoteAddress;
+    static String gitRemoteAddress;
 
-    String gitRemoteUser;
+    static String gitRemoteUser;
 
-    String gitRemotePassword;
+    static String gitRemotePassword;
 
     private static final int REQUEST_CODE_OPEN_DIRECTORY = 1;
 
@@ -54,8 +54,6 @@ public class MainActivity extends AppCompatActivity {
     EditText passwordEditor;
 
     Button cloneButton;
-
-    Button clearButton;
 
     Button syncButton;
 
@@ -86,13 +84,6 @@ public class MainActivity extends AppCompatActivity {
         userNameEditor.setText(gitRemoteUser);
         passwordEditor = this.findViewById(R.id.passwordEditor);
         passwordEditor.setText(gitRemotePassword);
-
-        clearButton = this.findViewById(R.id.clearButton);
-        clearButton.setOnClickListener(
-                v -> {
-                    clearRepository();
-                }
-        );
 
         cloneButton = this.findViewById(R.id.cloneButton);
         cloneButton.setOnClickListener(
@@ -186,15 +177,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUiState() {
-        boolean repoNotInitialized = this.folderUrl == null;
+        boolean repoNotInitialized = folderUrl == null;
 
-        repoUrlEditor.setEnabled(repoNotInitialized);
-        userNameEditor.setEnabled(repoNotInitialized);
-        passwordEditor.setEnabled(repoNotInitialized);
+        repoUrlEditor.setEnabled(repoNotInitialized && !isCloning);
+        userNameEditor.setEnabled(repoNotInitialized && !isCloning);
+        passwordEditor.setEnabled(repoNotInitialized && !isCloning);
 
         cloneButton.setEnabled(repoNotInitialized && !isCloning);
-        clearButton.setEnabled(!repoNotInitialized && !isCloning);
-        syncButton.setEnabled(!repoNotInitialized && !isSynchronizing);
+        syncButton.setEnabled(!repoNotInitialized && !isSynchronizing && !isCloning);
     }
 
     public void openFolderPicker(int requestCode) {
@@ -217,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Save the URI for later use
                 storeFolderUri(folderUri);
-                this.folderUrl = folderUri;
+                folderUrl = folderUri;
 
                 new CloneRepoTask(gitRemoteAddress).execute();
 
@@ -271,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove("folder_uri");
         editor.apply();
-        this.folderUrl = null;
+        folderUrl = null;
     }
 
     private Uri getFolderUri() {

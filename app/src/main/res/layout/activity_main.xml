@@ -36,12 +36,6 @@
         android:text="Clone Repository" />
 
     <Button
-        android:id="@+id/clearButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Clear Repository" />
-
-    <Button
         android:id="@+id/syncButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
