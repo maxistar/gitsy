@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.TreeMap;
 
 public class FileRegistry {
@@ -34,7 +35,9 @@ public class FileRegistry {
         this.localModificationTime = 0;
         this.safModificationTime = 0;
         if (type == NODE_FOLDER) {
-            this.files = new TreeMap<>();
+            this.files = new TreeMap<String, FileRegistry>(
+                    String::compareTo
+            );
         } else {
             this.files = null;
         }

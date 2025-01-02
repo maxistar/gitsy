@@ -88,7 +88,7 @@ public class FileStorageService {
 
         FileRegistry[] registry = filesRegistryMap.values().toArray(new FileRegistry[0]);
 
-        Arrays.sort(registry, Comparator.comparing(FileRegistry::getName));
+        // Arrays.sort(registry, Comparator.comparing(FileRegistry::getName));
 
         int i = 0;
         int j = 0;
@@ -209,7 +209,7 @@ public class FileStorageService {
 
         FileRegistry[] registry = filesRegistryMap.values().toArray(new FileRegistry[0]);
 
-        Arrays.sort(registry, Comparator.comparing(FileRegistry::getName));
+        // Arrays.sort(registry, Comparator.comparing(FileRegistry::getName));
 
         int i = 0;
         int j = 0;
