@@ -1,6 +1,8 @@
 package me.maxistar.gitsync;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.menu.MenuBuilder;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -10,7 +12,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -32,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
     boolean isSynchronizing = false;
 
-    boolean isClonning = false;
+    boolean isCloning = false;
 
     String gitRemoteAddress;
 
@@ -87,27 +90,14 @@ public class MainActivity extends AppCompatActivity {
         clearButton = this.findViewById(R.id.clearButton);
         clearButton.setOnClickListener(
                 v -> {
-                    File tempDir = new File(getCacheDir(), FOLDER_NAME);
-                    fileStorageService.deleteDirectoryRecursivelyAndSaveRegistry(MainActivity.this, tempDir);
-                    resetFolderUri();
-                    updateUiState();
+                    clearRepository();
                 }
         );
 
         cloneButton = this.findViewById(R.id.cloneButton);
         cloneButton.setOnClickListener(
                 v -> {
-                    isClonning = true;
-                    storeStringValue(GIT_REMOTE_ADDRESS, String.valueOf(repoUrlEditor.getText()));
-                    gitRemoteAddress = String.valueOf(repoUrlEditor.getText());
-
-                    storeStringValue(GIT_REMOTE_USER, String.valueOf(userNameEditor.getText()));
-                    gitRemoteUser = String.valueOf(userNameEditor.getText());
-
-                    storeStringValue(GIT_REMOTE_PASSWORD, String.valueOf(passwordEditor.getText()));
-                    gitRemotePassword = String.valueOf(passwordEditor.getText());
-                    updateUiState();
-                    openFolderPicker(REQUEST_CODE_OPEN_DIRECTORY);
+                    cloneRepository();
                 }
         );
 
@@ -122,14 +112,77 @@ public class MainActivity extends AppCompatActivity {
         syncButton = this.findViewById(R.id.syncButton);
         syncButton.setOnClickListener(
                 v -> {
-                    isSynchronizing = true;
-                    updateUiState();
-                    new SyncRepoTask().execute();
+                    syncRepository();
                 }
         );
 
         updateUiState();
 
+    }
+
+    void syncRepository() {
+        isSynchronizing = true;
+        updateUiState();
+        new SyncRepoTask().execute();
+    }
+
+    void clearRepository() {
+        File tempDir = new File(getCacheDir(), FOLDER_NAME);
+        fileStorageService.deleteDirectoryRecursivelyAndSaveRegistry(MainActivity.this, tempDir);
+        resetFolderUri();
+        updateUiState();
+    }
+
+    void cloneRepository() {
+        isCloning = true;
+        storeStringValue(GIT_REMOTE_ADDRESS, String.valueOf(repoUrlEditor.getText()));
+        gitRemoteAddress = String.valueOf(repoUrlEditor.getText());
+
+        storeStringValue(GIT_REMOTE_USER, String.valueOf(userNameEditor.getText()));
+        gitRemoteUser = String.valueOf(userNameEditor.getText());
+
+        storeStringValue(GIT_REMOTE_PASSWORD, String.valueOf(passwordEditor.getText()));
+        gitRemotePassword = String.valueOf(passwordEditor.getText());
+        updateUiState();
+        openFolderPicker(REQUEST_CODE_OPEN_DIRECTORY);
+    }
+
+    void showBoutBox() {
+        //
+    }
+
+    @SuppressLint("RestrictedApi")
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+
+        if(menu instanceof MenuBuilder){
+            MenuBuilder m = (MenuBuilder) menu;
+            m.setOptionalIconsVisible(true);
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.menu_clone_repo) {
+            cloneRepository();
+        } else if (itemId == R.id.menu_sync) {
+            syncRepository();
+        } else if (itemId == R.id.menu_about) {
+            showBoutBox();
+        } else if (itemId == R.id.menu_reset_repo) {
+            clearRepository();
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void updateUiState() {
@@ -139,8 +192,8 @@ public class MainActivity extends AppCompatActivity {
         userNameEditor.setEnabled(repoNotInitialized);
         passwordEditor.setEnabled(repoNotInitialized);
 
-        cloneButton.setEnabled(repoNotInitialized && !isClonning);
-        clearButton.setEnabled(!repoNotInitialized && !isClonning);
+        cloneButton.setEnabled(repoNotInitialized && !isCloning);
+        clearButton.setEnabled(!repoNotInitialized && !isCloning);
         syncButton.setEnabled(!repoNotInitialized && !isSynchronizing);
     }
 
@@ -182,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
             persistUriPermissions(data);
             Log.d(TAG, "Selected Folder URI: " + folderUri.toString());
         } else if (resultCode == RESULT_CANCELED) {
-            isClonning = false;
+            isCloning = false;
             updateUiState();
         }
     }
@@ -260,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
             Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
-            isClonning = false;
+            isCloning = false;
             updateUiState();
         }
     }

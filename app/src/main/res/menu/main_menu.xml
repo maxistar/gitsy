@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_sync"
+        android:title="@string/SyncRepo"
+        android:icon="@drawable/ic_save"
+        app:iconTint="@color/colorIcon" />
+    <item
+        android:id="@+id/menu_reset_repo"
+        android:title="@string/ResetRepo"
+        android:icon="@drawable/ic_file"
+        app:iconTint="@color/colorIcon" />
+    <item
+        android:id="@+id/menu_clone_repo"
+        android:title="@string/CloneRepo"
+        android:icon="@drawable/ic_save_as"
+        app:iconTint="@color/colorIcon" />
+    <item
+        android:id="@+id/menu_about"
+        android:title="@string/About"
+        android:icon="@drawable/ic_settings"
+        app:iconTint="@color/colorIcon" />
+</menu>
