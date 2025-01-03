@@ -93,6 +93,7 @@ public class FileRegistry {
     }
 
     public static void saveRegistryToFile(FileRegistry registry, File outputFile) {
+
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try (FileWriter writer = new FileWriter(outputFile)) {
             gson.toJson(registry, writer);

@@ -4,4 +4,5 @@
     <string name="CloneRepo">Clone Repo</string>
     <string name="ResetRepo">Reset Repo</string>
     <string name="SyncRepo">Synchronize Repo</string>
+    <string name="AddRepo">Add Repo</string>
 </resources>

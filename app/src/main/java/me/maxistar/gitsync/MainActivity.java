@@ -25,18 +25,23 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+
 import java.io.File;
+import java.util.ArrayList;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ProjectAdapter.OnProjectListener {
 
     public static final String GIT_REMOTE_ADDRESS = "git_remote_address";
     public static final String GIT_REMOTE_USER = "git_remote_user";
     public static final String GIT_REMOTE_PASSWORD = "git_remote_password";
     public static final String TAG = "GitSyncDebug";
-    static final String FOLDER_NAME = "temp-repo";
+    // static final String FOLDER_NAME = "temp-repo";
 
-    static final String REGISTRY_JSON = "registry.json";
 
     static Uri folderUrl;
 
@@ -50,15 +55,6 @@ public class MainActivity extends AppCompatActivity {
 
     static String gitRemotePassword;
 
-    private static final int REQUEST_CODE_OPEN_DIRECTORY = 1;
-
-    private static final int REQUEST_CODE_OPEN_TEST_DIRECTORY = 2;
-
-    EditText repoUrlEditor;
-
-    EditText userNameEditor;
-
-    EditText passwordEditor;
 
     Button cloneButton;
 
@@ -66,15 +62,44 @@ public class MainActivity extends AppCompatActivity {
 
     Button testButton;
 
-    FileStorageService fileStorageService;
 
-    GitService gitService;
+
+    private ProjectViewModel viewModel;
+    private RecyclerView recyclerView;
+    private ProjectAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        fileStorageService = new FileStorageService(REGISTRY_JSON);
-        gitService = new GitService();
+        setContentView(R.layout.activity_main);
+
+        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        if (adapter == null) {
+            adapter = new ProjectAdapter(new ArrayList<>(), this);
+            recyclerView.setAdapter(adapter);
+        }
+
+        viewModel = new ViewModelProvider(this).get(ProjectViewModel.class);
+        viewModel.getProjects().observe(this, projects -> {
+            adapter.setProjects(projects);
+        });
+        viewModel.loadProjects(getApplicationContext());
+        registerForContextMenu(recyclerView);
+
+        EventBus.getInstance().subscribe(UpdateListEvent.class, new EventBus.EventListener<UpdateListEvent>() {
+            @Override
+            public void onEvent(UpdateListEvent event) {
+                System.out.println("Received event with message: " + event.getMessage());
+                viewModel.updateProjects();
+                adapter.notifyDataSetChanged();
+            }
+        });
+
+
+/*        super.onCreate(savedInstanceState);
+
 
         setContentView(R.layout.activity_main);
 
@@ -113,23 +138,47 @@ public class MainActivity extends AppCompatActivity {
         );
 
         updateUiState();
-
+*/
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == 0) { // Delete option
+            viewModel.deleteProject(getApplicationContext(), item.getGroupId()); // groupId used as the position
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void onProjectDelete(int position) {
+        viewModel.deleteProject(getApplicationContext(), position);
+    }
+
 
     void syncRepository() {
         isSynchronizing = true;
         updateUiState();
-        new SyncRepoTask(this, gitService, fileStorageService).execute();
+        //new SyncRepoTask(this, gitService, fileStorageService).execute();
     }
 
     void clearRepository() {
+        /*
         File tempDir = new File(getFilesDir(), FOLDER_NAME);
-        fileStorageService.deleteDirectoryRecursivelyAndSaveRegistry(MainActivity.this, tempDir);
+        //fileStorageService.deleteDirectoryRecursivelyAndSaveRegistry(MainActivity.this, tempDir);
         resetFolderUri();
         updateUiState();
+         */
     }
 
     void cloneRepository() {
+        /*
         isCloning = true;
         storeStringValue(GIT_REMOTE_ADDRESS, String.valueOf(repoUrlEditor.getText()));
         gitRemoteAddress = String.valueOf(repoUrlEditor.getText());
@@ -141,6 +190,12 @@ public class MainActivity extends AppCompatActivity {
         gitRemotePassword = String.valueOf(passwordEditor.getText());
         updateUiState();
         openFolderPicker(REQUEST_CODE_OPEN_DIRECTORY);
+        */
+    }
+
+    void addRepository() {
+        Intent intent = new Intent(MainActivity.this, AddProjectActivity.class);
+        startActivity(intent);
     }
 
     void showAboutBox() {
@@ -211,6 +266,8 @@ public class MainActivity extends AppCompatActivity {
             syncRepository();
         } else if (itemId == R.id.menu_about) {
             showAboutBox();
+        } else if (itemId == R.id.menu_add_repo) {
+            addRepository();
         } else if (itemId == R.id.menu_reset_repo) {
             clearRepository();
         }
@@ -220,75 +277,20 @@ public class MainActivity extends AppCompatActivity {
     private void updateUiState() {
         boolean repoNotInitialized = folderUrl == null;
 
+        /*
         repoUrlEditor.setEnabled(repoNotInitialized && !isCloning);
         userNameEditor.setEnabled(repoNotInitialized && !isCloning);
         passwordEditor.setEnabled(repoNotInitialized && !isCloning);
-
+         */
         cloneButton.setEnabled(repoNotInitialized && !isCloning);
         syncButton.setEnabled(!repoNotInitialized && !isSynchronizing && !isCloning);
-    }
-
-    public void openFolderPicker(int requestCode) {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        startActivityForResult(intent, requestCode);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_CODE_OPEN_DIRECTORY && resultCode == RESULT_OK) {
-            Uri folderUri = data.getData();
-            Log.i(TAG, "selected folder: " + folderUri.toString());
-
-            if (folderUri != null) {
-                // Persist access permissions
-                getContentResolver().takePersistableUriPermission(folderUri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-
-                // Save the URI for later use
-                storeFolderUri(folderUri);
-                folderUrl = folderUri;
-
-                new CloneRepoTask(this, gitService, fileStorageService).execute();
-
-
-                // Optional: Display or use the URI
-                Log.d(TAG, "Selected Folder URI: " + folderUri.toString());
-            }
-        } else if (requestCode == REQUEST_CODE_OPEN_TEST_DIRECTORY && resultCode == RESULT_OK) {
-            Uri folderUri = data.getData();
-            if (folderUri != null) {
-                // Persist access permissions
-                getContentResolver().takePersistableUriPermission(folderUri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            }
-            persistUriPermissions(data);
-            Log.d(TAG, "Selected Folder URI: " + folderUri.toString());
-        } else if (resultCode == RESULT_CANCELED) {
-            isCloning = false;
-            updateUiState();
-        }
     }
 
     private void storeFolderUri(Uri folderUri) {
         storeStringValue("folder_uri", folderUri.toString());
     }
 
-    @SuppressLint("WrongConstant")
-    private void persistUriPermissions(Intent data) {
-        // Check for the freshest data.
-        Uri uri = data.getData();
-        if (uri == null) {
-            return;
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            int takeFlags = data.getFlags()
-                    & (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            getContentResolver().takePersistableUriPermission(uri, takeFlags);
-        }
-    }
+
 
     private void storeStringValue(String name, String value) {
         SharedPreferences sharedPreferences = getSharedPreferences("MyAppPrefs", MODE_PRIVATE);
@@ -335,16 +337,20 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(Void... voids) {
+            /*
             try {
+
                 gitService.cloneRepository(context, FOLDER_NAME, gitRemoteAddress, gitRemoteUser, gitRemotePassword);
 
                 fileStorageService.copyToSaf(context, FOLDER_NAME, folderUrl);
 
                 return "Repository cloned successfully!";
 
+
             } catch (Exception e) {
                 return "Error: " + e.getMessage();
-            }
+            }*/
+            return "Error: ";
         }
 
         @Override
@@ -371,13 +377,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(Void... voids) {
             try {
-
+                /*
                 fileStorageService.copyFromSaf(context, folderUrl, FOLDER_NAME);
 
                 gitService.syncRepository(context, FOLDER_NAME, gitRemoteUser, gitRemotePassword);
 
                 fileStorageService.copyToSaf(context, FOLDER_NAME, folderUrl);
 
+                */
                 return "Files synchronized successfully!";
             } catch (Exception e) {
                 return "Error: " + e.getMessage();

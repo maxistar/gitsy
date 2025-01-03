@@ -6,48 +6,9 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <EditText
-        android:id="@+id/repoUrlEditor"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Repository URL"
-        android:text=""
-        />
-
-    <EditText
-        android:id="@+id/userNameEditor"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:hint="username" />
-
-    <EditText
-        android:id="@+id/passwordEditor"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:inputType="textPassword"
-        android:hint="password" />
-
-    <Button
-        android:id="@+id/cloneButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Clone Repository" />
-
-    <Button
-        android:id="@+id/syncButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Sync" />
-
-    <Button
-        android:id="@+id/testButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Create Test Folder"
-        android:visibility="gone"
-        />
-
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
 </LinearLayout>

@@ -19,6 +19,8 @@ import java.util.TreeMap;
 
 public class FileStorageService {
 
+    private static FileStorageService instance;
+
     public static final String TAG = "GitSyncDebug";
     public static final int BUFFER_SIZE = 1024;
 

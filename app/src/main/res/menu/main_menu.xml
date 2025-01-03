@@ -16,6 +16,13 @@
         android:title="@string/CloneRepo"
         android:icon="@drawable/ic_save_as"
         app:iconTint="@color/colorIcon" />
+
+    <item
+        android:id="@+id/menu_add_repo"
+        android:title="@string/AddRepo"
+        android:icon="@drawable/ic_save_as"
+        app:iconTint="@color/colorIcon" />
+
     <item
         android:id="@+id/menu_about"
         android:title="@string/About"
