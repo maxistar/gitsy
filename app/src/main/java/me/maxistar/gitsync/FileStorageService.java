@@ -30,22 +30,11 @@ public class FileStorageService {
         this.registryName = registryName;
     }
 
-    public void loadRegistry(Context context) {
-        Log.d(TAG, "load registry");
-        File localDir = new File(context.getCacheDir(), registryName);
-        localRegistry = FileRegistry.loadRegistryFromFile(localDir);
-    }
-
-    public void saveLocalRegistry(Context context) {
-        File localDir = new File(context.getCacheDir(), registryName);
-        FileRegistry.saveRegistryToFile(localRegistry, localDir);
-    }
-
     public void copyToSaf(Context context, String sourceDirName, Uri treeUri) {
-
+        loadRegistry(context);
         Log.d(TAG, "Move Files to SAF");
 
-        File sourceDir = new File(context.getCacheDir(), sourceDirName);
+        File sourceDir = new File(context.getFilesDir(), sourceDirName);
 
         String documentId = DocumentsContract.getTreeDocumentId(treeUri);
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
@@ -62,8 +51,9 @@ public class FileStorageService {
     }
 
     public void copyFromSaf(Context context, Uri treeUri, String destinationDirName) {
+        loadRegistry(context);
         Log.d(TAG, "Move Files from SAF");
-        File destinationDir = new File(context.getCacheDir(), destinationDirName);
+        File destinationDir = new File(context.getFilesDir(), destinationDirName);
 
         // Query parameters
         String documentId = DocumentsContract.getTreeDocumentId(treeUri);
@@ -79,16 +69,31 @@ public class FileStorageService {
         Log.d(TAG, "Stop Moving Files from SAF");
     }
 
+    public void deleteDirectoryRecursivelyAndSaveRegistry(Context context, File directory) {
+        deleteDirectoryRecursively(directory);
+        // create a new empty registry and store it
+        localRegistry = new FileRegistry("", FileRegistry.NODE_FOLDER);
+        saveLocalRegistry(context);
+    }
+
+    private void loadRegistry(Context context) {
+        Log.d(TAG, "load registry");
+        File localDir = new File(context.getFilesDir(), registryName);
+        localRegistry = FileRegistry.loadRegistryFromFile(localDir);
+    }
+
+    private void saveLocalRegistry(Context context) {
+        File localDir = new File(context.getFilesDir(), registryName);
+        FileRegistry.saveRegistryToFile(localRegistry, localDir);
+    }
+
     private void transferChangesRecursivelyToSaf(Context context, File sourceDir, DocumentFile targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
 
-        // Log.d(TAG, "List Files");
         File[] files = sourceDir.listFiles();
 
         Arrays.sort(files, Comparator.comparing(File::getName));
 
         FileRegistry[] registry = filesRegistryMap.values().toArray(new FileRegistry[0]);
-
-        // Arrays.sort(registry, Comparator.comparing(FileRegistry::getName));
 
         int i = 0;
         int j = 0;
@@ -345,7 +350,7 @@ public class FileStorageService {
         fileInfo.setSize(targetFile.length());
     }
 
-    public boolean deleteDirectoryRecursively(File directory) {
+    private boolean deleteDirectoryRecursively(File directory) {
         if (directory != null && directory.isDirectory()) {
             File[] files = directory.listFiles();
             if (files != null) {
@@ -359,7 +364,7 @@ public class FileStorageService {
         return directory != null && directory.delete();
     }
 
-    public boolean deleteDirectoryRecursively(DocumentFile directory) {
+    private boolean deleteDirectoryRecursively(DocumentFile directory) {
         if (directory != null && directory.isDirectory()) {
             DocumentFile[] files = directory.listFiles();
             if (files != null) {
@@ -371,12 +376,5 @@ public class FileStorageService {
             }
         }
         return directory != null && directory.delete();
-    }
-
-    public void deleteDirectoryRecursivelyAndSaveRegistry(Context context, File directory) {
-        deleteDirectoryRecursively(directory);
-        // create a new empty registry and store it
-        localRegistry = new FileRegistry("", FileRegistry.NODE_FOLDER);
-        saveLocalRegistry(context);
     }
 }

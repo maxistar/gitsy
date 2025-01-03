@@ -6,6 +6,7 @@ import androidx.appcompat.view.menu.MenuBuilder;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String GIT_REMOTE_USER = "git_remote_user";
     public static final String GIT_REMOTE_PASSWORD = "git_remote_password";
     public static final String TAG = "GitSyncDebug";
-    final String FOLDER_NAME = "temp-repo";
+    static final String FOLDER_NAME = "temp-repo";
 
     static final String REGISTRY_JSON = "registry.json";
 
@@ -73,8 +74,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         fileStorageService = new FileStorageService(REGISTRY_JSON);
-        fileStorageService.loadRegistry(this);
-
         gitService = new GitService();
 
         setContentView(R.layout.activity_main);
@@ -120,11 +119,11 @@ public class MainActivity extends AppCompatActivity {
     void syncRepository() {
         isSynchronizing = true;
         updateUiState();
-        new SyncRepoTask().execute();
+        new SyncRepoTask(this, gitService, fileStorageService).execute();
     }
 
     void clearRepository() {
-        File tempDir = new File(getCacheDir(), FOLDER_NAME);
+        File tempDir = new File(getFilesDir(), FOLDER_NAME);
         fileStorageService.deleteDirectoryRecursivelyAndSaveRegistry(MainActivity.this, tempDir);
         resetFolderUri();
         updateUiState();
@@ -251,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
                 storeFolderUri(folderUri);
                 folderUrl = folderUri;
 
-                new CloneRepoTask(gitRemoteAddress).execute();
+                new CloneRepoTask(this, gitService, fileStorageService).execute();
 
 
                 // Optional: Display or use the URI
@@ -322,18 +321,24 @@ public class MainActivity extends AppCompatActivity {
 
 
     private class CloneRepoTask extends AsyncTask<Void, Void, String> {
-        private String repoUrl;
 
-        public CloneRepoTask(String repoUrl) {
-            this.repoUrl = repoUrl;
+        Context context;
+        GitService gitService;
+
+        FileStorageService fileStorageService;
+
+        public CloneRepoTask(Context context, GitService gitService, FileStorageService fileStorageService) {
+            this.context = context.getApplicationContext();
+            this.gitService = gitService;
+            this.fileStorageService = fileStorageService;
         }
 
         @Override
         protected String doInBackground(Void... voids) {
             try {
-                gitService.cloneRepository(MainActivity.this, FOLDER_NAME, repoUrl, gitRemoteUser, gitRemotePassword);
+                gitService.cloneRepository(context, FOLDER_NAME, gitRemoteAddress, gitRemoteUser, gitRemotePassword);
 
-                fileStorageService.copyToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
+                fileStorageService.copyToSaf(context, FOLDER_NAME, folderUrl);
 
                 return "Repository cloned successfully!";
 
@@ -344,22 +349,34 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
+            Toast.makeText(context, result, Toast.LENGTH_LONG).show();
             isCloning = false;
             updateUiState();
         }
     }
 
     private class SyncRepoTask extends AsyncTask<Void, Void, String> {
+
+        Context context;
+        GitService gitService;
+
+        FileStorageService fileStorageService;
+
+        public SyncRepoTask(Context context, GitService gitService, FileStorageService fileStorageService) {
+            this.context = context.getApplicationContext();
+            this.gitService = gitService;
+            this.fileStorageService = fileStorageService;
+        }
+
         @Override
         protected String doInBackground(Void... voids) {
             try {
 
-                fileStorageService.copyFromSaf(MainActivity.this, folderUrl, FOLDER_NAME);
+                fileStorageService.copyFromSaf(context, folderUrl, FOLDER_NAME);
 
-                gitService.syncRepository(MainActivity.this, FOLDER_NAME, gitRemoteUser, gitRemotePassword);
+                gitService.syncRepository(context, FOLDER_NAME, gitRemoteUser, gitRemotePassword);
 
-                fileStorageService.copyToSaf(MainActivity.this, FOLDER_NAME, folderUrl);
+                fileStorageService.copyToSaf(context, FOLDER_NAME, folderUrl);
 
                 return "Files synchronized successfully!";
             } catch (Exception e) {
@@ -370,7 +387,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
             // Update the UI after cloning
-            Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
+            Toast.makeText(context, result, Toast.LENGTH_LONG).show();
             isSynchronizing = false;
             updateUiState();
         }

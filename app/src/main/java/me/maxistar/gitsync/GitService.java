@@ -18,7 +18,7 @@ public class GitService {
     public void cloneRepository(Context context, String internalFolderName, String repoUrl, String gitRemoteUser, String gitRemotePassword) throws GitAPIException {
         Log.d(TAG, "Start Clone Repo");
 
-        File tempDir = new File(context.getCacheDir(), internalFolderName);
+        File tempDir = new File(context.getFilesDir(), internalFolderName);
 
         Git.cloneRepository()
                 .setURI(repoUrl)
@@ -30,7 +30,7 @@ public class GitService {
     }
 
     public void syncRepository(Context context,String internalFolderName, String gitRemoteUser, String gitRemotePassword) throws IOException, GitAPIException {
-        File tempDir = new File(context.getCacheDir(), internalFolderName);
+        File tempDir = new File(context.getFilesDir(), internalFolderName);
         Git git = Git.open(tempDir);
 
         org.eclipse.jgit.api.Status status = git.status().call();

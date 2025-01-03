@@ -39,7 +39,7 @@ public class FileStorageServiceTest {
 
 
         // Set up source and destination directories
-        sourceDir = new File(context.getCacheDir(), SOURCE_DIR_NAME);
+        sourceDir = new File(context.getFilesDir(), SOURCE_DIR_NAME);
         fileStorageService.deleteDirectoryRecursivelyAndSaveRegistry(context, sourceDir);
         sourceDir.mkdirs();
     }
