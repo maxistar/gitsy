@@ -15,6 +15,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -88,12 +90,19 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         viewModel.loadProjects(getApplicationContext());
         registerForContextMenu(recyclerView);
 
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+
         EventBus.getInstance().subscribe(UpdateListEvent.class, new EventBus.EventListener<UpdateListEvent>() {
             @Override
             public void onEvent(UpdateListEvent event) {
-                System.out.println("Received event with message: " + event.getMessage());
-                viewModel.updateProjectsFromThread();
-                adapter.notifyDataSetChanged();
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println("Received event with message: " + event.getMessage());
+                        viewModel.updateProjects();
+                        adapter.notifyDataSetChanged();
+                    }
+                });
             }
         });
 
