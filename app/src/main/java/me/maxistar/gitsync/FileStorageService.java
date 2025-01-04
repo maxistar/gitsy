@@ -26,14 +26,12 @@ public class FileStorageService {
 
     private FileRegistry localRegistry;
 
-    private final String registryName;
-
-    public FileStorageService(String registryName) {
-        this.registryName = registryName;
+    public FileStorageService() {
     }
 
     public void copyToSaf(Context context, String sourceDirName, Uri treeUri) {
-        loadRegistry(context);
+        String registryFilename = sourceDirName + ".json";
+        loadRegistry(context, registryFilename);
         Log.d(TAG, "Move Files to SAF");
 
         File sourceDir = new File(context.getFilesDir(), sourceDirName);
@@ -47,13 +45,14 @@ public class FileStorageService {
         DocumentFile pickedDir = DocumentFile.fromTreeUri(context, childrenUri);
 
         transferChangesRecursivelyToSaf(context, sourceDir, pickedDir, localRegistry.getFiles());
-        saveLocalRegistry(context);
+        saveLocalRegistry(context, registryFilename);
 
         Log.d(TAG, "Stop Moving Files to SAF");
     }
 
     public void copyFromSaf(Context context, Uri treeUri, String destinationDirName) {
-        loadRegistry(context);
+        String registryFilename = destinationDirName + ".json";
+        loadRegistry(context, registryFilename);
         Log.d(TAG, "Move Files from SAF");
         File destinationDir = new File(context.getFilesDir(), destinationDirName);
 
@@ -66,26 +65,28 @@ public class FileStorageService {
 
         // Recursively copy files from SAF to internal storage
         transferChangesRecursivelyFromSaf(context, childrenUri, destinationDir, localRegistry.getFiles());
-        saveLocalRegistry(context);
+        saveLocalRegistry(context, registryFilename);
 
         Log.d(TAG, "Stop Moving Files from SAF");
     }
 
-    public void deleteDirectoryRecursivelyAndSaveRegistry(Context context, File directory) {
+    public void deleteLocalDirectoryRecursively(Context context, String directoryName) {
+        File directory = new File(context.getFilesDir(), directoryName);
         deleteDirectoryRecursively(directory);
-        // create a new empty registry and store it
-        localRegistry = new FileRegistry("", FileRegistry.NODE_FOLDER);
-        saveLocalRegistry(context);
+
+        String registryFilename = directoryName + ".json";
+        File registryFile = new File(context.getFilesDir(), registryFilename);
+        registryFile.delete();
     }
 
-    private void loadRegistry(Context context) {
+    private void loadRegistry(Context context, String registryFilename) {
         Log.d(TAG, "load registry");
-        File localDir = new File(context.getFilesDir(), registryName);
+        File localDir = new File(context.getFilesDir(), registryFilename);
         localRegistry = FileRegistry.loadRegistryFromFile(localDir);
     }
 
-    private void saveLocalRegistry(Context context) {
-        File localDir = new File(context.getFilesDir(), registryName);
+    private void saveLocalRegistry(Context context, String registryFilename) {
+        File localDir = new File(context.getFilesDir(), registryFilename);
         FileRegistry.saveRegistryToFile(localRegistry, localDir);
     }
 

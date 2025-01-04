@@ -35,12 +35,12 @@ public class FileStorageServiceTest {
     @Before
     public void setUp() throws IOException {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        fileStorageService = new FileStorageService("test-registry.json");
+        fileStorageService = new FileStorageService();
 
 
         // Set up source and destination directories
+        fileStorageService.deleteLocalDirectoryRecursively(context, SOURCE_DIR_NAME);
         sourceDir = new File(context.getFilesDir(), SOURCE_DIR_NAME);
-        fileStorageService.deleteDirectoryRecursivelyAndSaveRegistry(context, sourceDir);
         sourceDir.mkdirs();
     }
 

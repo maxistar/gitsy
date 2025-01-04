@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
                     public void run() {
                         System.out.println("Received event with message: " + event.getMessage());
                         viewModel.updateProjects();
+                        viewModel.saveProjects(getApplicationContext());
                         adapter.notifyDataSetChanged();
                     }
                 });
@@ -165,6 +166,9 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         }
         if (item.getItemId() == 1) { // Synchronyze option
             viewModel.syncProject(getApplicationContext(), item.getGroupId()); // groupId used as the position
+
+            Intent startIntent = new Intent(this, ProjectService.class);
+            startService(startIntent);
         }
         return false;
     }
@@ -331,47 +335,6 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     private String getStoredValue(String name) {
         SharedPreferences sharedPreferences = getSharedPreferences("MyAppPrefs", MODE_PRIVATE);
         return sharedPreferences.getString(name, "");
-    }
-
-
-
-    private class CloneRepoTask extends AsyncTask<Void, Void, String> {
-
-        Context context;
-        GitService gitService;
-
-        FileStorageService fileStorageService;
-
-        public CloneRepoTask(Context context, GitService gitService, FileStorageService fileStorageService) {
-            this.context = context.getApplicationContext();
-            this.gitService = gitService;
-            this.fileStorageService = fileStorageService;
-        }
-
-        @Override
-        protected String doInBackground(Void... voids) {
-            /*
-            try {
-
-                gitService.cloneRepository(context, FOLDER_NAME, gitRemoteAddress, gitRemoteUser, gitRemotePassword);
-
-                fileStorageService.copyToSaf(context, FOLDER_NAME, folderUrl);
-
-                return "Repository cloned successfully!";
-
-
-            } catch (Exception e) {
-                return "Error: " + e.getMessage();
-            }*/
-            return "Error: ";
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            Toast.makeText(context, result, Toast.LENGTH_LONG).show();
-            isCloning = false;
-            updateUiState();
-        }
     }
 
     private class SyncRepoTask extends AsyncTask<Void, Void, String> {

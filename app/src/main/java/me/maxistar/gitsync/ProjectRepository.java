@@ -32,11 +32,19 @@ public class ProjectRepository {
 
     public void addProject(Context context, ProjectModel project) {
         projects.add(project);
-        FileUtils.saveProjectList(context, projects);
+        saveProjects(context);
     }
 
     public void deleteProject(Context context, int position) {
         projects.remove(position);
+        saveProjects(context);
+    }
+
+    public void saveProjects(Context context) {
         FileUtils.saveProjectList(context, projects);
+    }
+
+    public ProjectModel getProject(int position) {
+        return projects.get(position);
     }
 }

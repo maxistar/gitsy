@@ -40,8 +40,8 @@ public class ProjectViewModel extends ViewModel {
         projects.setValue(new ArrayList<>(repository.getProjects()));
     }
 
-    public void updateProjectsFromThread() {
-        projects.postValue(new ArrayList<>(repository.getProjects()));
+    public void saveProjects(Context context) {
+        repository.saveProjects(context);
     }
 
     public void deleteProject(Context context, int position) {
@@ -53,9 +53,11 @@ public class ProjectViewModel extends ViewModel {
     }
 
     public void syncProject(Context context, int position) {
-        List<ProjectModel> currentProjects = repository.getProjects();
+        List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
         if (position >= 0 && position < currentProjects.size()) {
-            repository.deleteProject(context, position);
+            ProjectModel model = currentProjects.get(position);
+            model.setStatus(ProjectModel.STATUS_TO_SYNC);
+            repository.saveProjects(context);
             projects.setValue(repository.getProjects());
         }
     }

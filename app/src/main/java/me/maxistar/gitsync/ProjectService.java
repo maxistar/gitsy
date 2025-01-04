@@ -22,12 +22,10 @@ public class ProjectService extends Service {
     GitService gitService;
 
 
-    static final String REGISTRY_JSON = "registry.json";
-
     @Override
     public void onCreate() {
         super.onCreate();
-        fileStorageService = new FileStorageService(REGISTRY_JSON);
+        fileStorageService = new FileStorageService();
         gitService = new GitService();
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         createNotificationChannel();
@@ -76,11 +74,57 @@ public class ProjectService extends Service {
                 if (project.getStatus() == ProjectModel.STATUS_TO_CLONE) {
                     cloneProject(project);
                 }
+                if (project.getStatus() == ProjectModel.STATUS_TO_SYNC) {
+                    syncProject(project);
+                }
             }
 
 
             stopSelf();
         }).start();
+    }
+
+    private void syncProject(ProjectModel project) {
+        project.setStatus(ProjectModel.STATUS_SYNC_IN_PROGRESS);
+        EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
+
+        try {
+
+            updateNotification("Copy changes to git");
+
+            fileStorageService.copyFromSaf(
+                    getApplicationContext(),
+                    Uri.parse(project.getFolderUri()),
+                    project.getFolderName()
+            );
+
+            updateNotification("Synchronization");
+
+            gitService.syncRepository(
+                    getApplicationContext(),
+                    project.getFolderName(),
+                    project.getUserName(),
+                    project.getPassword()
+            );
+
+            updateNotification("Copy changes to local folder");
+
+            fileStorageService.copyToSaf(
+                    getApplicationContext(),
+                    project.getFolderName(),
+                    Uri.parse(project.getFolderUri())
+            );
+
+
+            project.setStatus(ProjectModel.STATUS_READY);
+            EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
+
+
+        } catch (Exception e) {
+            project.setStatus(ProjectModel.STATUS_SYNC_ERROR);
+            EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
+            Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void cloneProject(ProjectModel project) {
@@ -111,7 +155,7 @@ public class ProjectService extends Service {
         } catch (Exception e) {
             project.setStatus(ProjectModel.STATUS_CLONING_ERROR);
             EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
-            // Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

@@ -61,7 +61,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
         } else if (status == ProjectModel.STATUS_TO_SYNC) {
             return " ready to sync";
         } else if (status == ProjectModel.STATUS_SYNC_IN_PROGRESS) {
-            return " ready to sync";
+            return " sync in progress";
         } else if (status == ProjectModel.STATUS_SYNC_ERROR) {
             return " sync error";
         }
