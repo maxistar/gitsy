@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
             @Override
             public void onEvent(UpdateListEvent event) {
                 System.out.println("Received event with message: " + event.getMessage());
-                viewModel.updateProjects();
+                viewModel.updateProjectsFromThread();
                 adapter.notifyDataSetChanged();
             }
         });
@@ -144,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     @Override
     protected void onResume() {
         super.onResume();
+        viewModel.updateProjects();
         adapter.notifyDataSetChanged();
     }
 
@@ -152,6 +153,9 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         if (item.getItemId() == 0) { // Delete option
             viewModel.deleteProject(getApplicationContext(), item.getGroupId()); // groupId used as the position
             return true;
+        }
+        if (item.getItemId() == 1) { // Synchronyze option
+            viewModel.syncProject(getApplicationContext(), item.getGroupId()); // groupId used as the position
         }
         return false;
     }

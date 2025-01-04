@@ -32,19 +32,31 @@ public class ProjectViewModel extends ViewModel {
 
     public void addProject(Context context, ProjectModel project) {
         repository.addProject(context, project);
-        List<ProjectModel> currentProjects = repository.getProjects();
+        List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
         projects.setValue(currentProjects);
     }
 
     public void updateProjects() {
+        projects.setValue(new ArrayList<>(repository.getProjects()));
+    }
+
+    public void updateProjectsFromThread() {
         projects.postValue(new ArrayList<>(repository.getProjects()));
     }
 
     public void deleteProject(Context context, int position) {
+        List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
+        if (position >= 0 && position < currentProjects.size()) {
+            repository.deleteProject(context, position);
+            projects.setValue(repository.getProjects());
+        }
+    }
+
+    public void syncProject(Context context, int position) {
         List<ProjectModel> currentProjects = repository.getProjects();
         if (position >= 0 && position < currentProjects.size()) {
             repository.deleteProject(context, position);
-            projects.setValue(new ArrayList<>(repository.getProjects()));
+            projects.setValue(repository.getProjects());
         }
     }
 }

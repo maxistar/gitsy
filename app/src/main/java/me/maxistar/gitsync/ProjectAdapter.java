@@ -7,6 +7,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.view.ContextMenu;
@@ -31,7 +32,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
     }
 
     public void setProjects(List<ProjectModel> projects) {
-        this.projectList = projects;
+        this.projectList = new ArrayList<>(projects);
         notifyDataSetChanged(); // Important to notify the adapter of data change
     }
 

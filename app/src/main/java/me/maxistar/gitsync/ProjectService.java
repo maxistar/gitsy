@@ -44,7 +44,7 @@ public class ProjectService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(getApplicationContext(), "Service Started", Toast.LENGTH_LONG).show();
+        // Toast.makeText(getApplicationContext(), "Service Started", Toast.LENGTH_LONG).show();
         startForeground(NOTIFICATION_ID, getNotification("Starting Service..."));
         // Perform long-running task in a background thread and update notification text
         performTaskAndUpdateNotification();
@@ -69,15 +69,6 @@ public class ProjectService extends Service {
 
     private void performTaskAndUpdateNotification() {
         new Thread(() -> {
-            // for (int i = 0; i <= 100; i += 10) {
-            //     try {
-            //         Thread.sleep(1000);
-            //     } catch (InterruptedException e) {
-            //         e.printStackTrace();
-            //     }
-            //     updateNotification("Progress: " + i + "%");
-            // }
-
             ProjectRepository repository = ProjectRepository.getInstance();
             List<ProjectModel> projects = repository.getProjects();
 
