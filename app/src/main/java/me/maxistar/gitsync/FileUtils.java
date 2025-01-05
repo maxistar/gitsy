@@ -7,20 +7,16 @@ import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
-import androidx.documentfile.provider.DocumentFile;
-
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import java.io.FileOutputStream;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 
@@ -28,8 +24,8 @@ public class FileUtils {
 
     public static final String TAG = "GitSyncDebug";
 
-    public static List<FileInfo> listFilesInFolder(Context context, Uri folderUri) {
-        List<FileInfo> fileInfos = new ArrayList<>();
+    public static List<SAFFileInfo> listFilesInFolder(Context context, Uri folderUri) {
+        List<SAFFileInfo> fileInfos = new ArrayList<>();
 
         ContentResolver resolver = context.getContentResolver();
         // String parentDocumentId = DocumentsContract.getTreeDocumentId(folderUri);
@@ -78,12 +74,12 @@ public class FileUtils {
                     int fileType;
 
                     if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType)) {
-                        fileType = FileInfo.TYPE_DIRECTORY; // Directory
+                        fileType = SAFFileInfo.TYPE_DIRECTORY; // Directory
 
                     } else if (mimeType != null && mimeType.startsWith("application/") || mimeType.startsWith("text/")) {
-                        fileType = FileInfo.TYPE_FILE; // File
+                        fileType = SAFFileInfo.TYPE_FILE; // File
                     } else {
-                        fileType = FileInfo.TYPE_OTHER; // Other
+                        fileType = SAFFileInfo.TYPE_OTHER; // Other
                     }
 
                     Uri documentUri = DocumentsContract.buildDocumentUriUsingTree(
@@ -96,7 +92,7 @@ public class FileUtils {
 
 
                     // Add to list
-                    fileInfos.add(new FileInfo(fileName, modificationTime, size, documentUri, fileType));
+                    fileInfos.add(new SAFFileInfo(fileName, modificationTime, size, documentUri, fileType));
                 }
             }
         }

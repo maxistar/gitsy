@@ -2,7 +2,7 @@ package me.maxistar.gitsync;
 
 import android.net.Uri;
 
-public class FileInfo {
+public class SAFFileInfo {
 
     public static final int TYPE_FILE = 0;
     public static final int TYPE_DIRECTORY = 1;
@@ -15,7 +15,7 @@ public class FileInfo {
     private int fileType; // 0 - file, 1 - directory, 3 - other
 
     // Constructor
-    public FileInfo(String fileName, long modificationTime, long size, Uri uri, int fileType) {
+    public SAFFileInfo(String fileName, long modificationTime, long size, Uri uri, int fileType) {
         this.fileName = fileName;
         this.modificationTime = modificationTime;
         this.size = size;

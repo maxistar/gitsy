@@ -211,9 +211,9 @@ public class FileStorageService {
 
     private void transferChangesRecursivelyFromSaf(Context context, Uri sourceDir, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
 
-        FileInfo[] files = FileUtils.listFilesInFolder(context, sourceDir).toArray(new FileInfo[0]);
+        SAFFileInfo[] files = FileUtils.listFilesInFolder(context, sourceDir).toArray(new SAFFileInfo[0]);
 
-        Arrays.sort(files, Comparator.comparing(FileInfo::getFileName));
+        Arrays.sort(files, Comparator.comparing(SAFFileInfo::getFileName));
 
         FileRegistry[] registry = filesRegistryMap.values().toArray(new FileRegistry[0]);
 
@@ -253,7 +253,7 @@ public class FileStorageService {
         }
     }
 
-    private void handleAddingFromSaf(Context context, FileInfo file, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
+    private void handleAddingFromSaf(Context context, SAFFileInfo file, File targetDir, TreeMap<String, FileRegistry> filesRegistryMap) {
         String filename = file.getFileName();
         if (".git".equals(filename)) {
             return;
@@ -282,7 +282,7 @@ public class FileStorageService {
         filesRegistryMap.remove(filename);
     }
 
-    private void handleChangesFromSaf(Context context, FileInfo file, File targetDir, FileRegistry fileInfo) {
+    private void handleChangesFromSaf(Context context, SAFFileInfo file, File targetDir, FileRegistry fileInfo) {
         String filename = fileInfo.getName();
         if (".git".equals(filename)) {
             return;
@@ -303,7 +303,7 @@ public class FileStorageService {
         }
     }
 
-    private boolean isFileUnchangedBasedOnStoredLocalTime(FileInfo sourceFile, FileRegistry targetFile) {
+    private boolean isFileUnchangedBasedOnStoredLocalTime(SAFFileInfo sourceFile, FileRegistry targetFile) {
         if (sourceFile.getSize() != targetFile.getSize()) {
             return false;
         }
@@ -335,7 +335,7 @@ public class FileStorageService {
         return sourceLastModified != targetLastModified;
     }
 
-    private void copyFileFromSaf(Context context, FileInfo sourceFile, File targetFile, FileRegistry fileInfo) {
+    private void copyFileFromSaf(Context context, SAFFileInfo sourceFile, File targetFile, FileRegistry fileInfo) {
         try (InputStream in = context.getContentResolver().openInputStream(sourceFile.getUri());
              OutputStream out = new FileOutputStream(targetFile)) {
             byte[] buffer = new byte[BUFFER_SIZE];
