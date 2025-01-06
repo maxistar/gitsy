@@ -141,7 +141,7 @@ public class FileStorageService {
         if (fileInfo.getType() == FileRegistry.NODE_FOLDER) {
             // Create a corresponding subdirectory in the target directory
             // Recursively copy files in this subdirectory
-            DocumentFile targetFile = targetDir.findFile(filename);
+            DocumentFile targetFile = DocumentFile.fromSingleUri(context, Uri.parse(fileInfo.getSafUri()));
             transferChangesRecursivelyToSaf(context, file, targetFile, fileInfo.getFiles());
         } else if (file.isFile()) {
             if (isFileUnchangedBasedOnRegistrySafTime(file, fileInfo)) {
@@ -149,10 +149,7 @@ public class FileStorageService {
                 // no changed needed
                 return;
             }
-            // Copy the file to the target directory
-            DocumentFile targetFile = targetDir.findFile(filename);
-            targetFile.delete(); // need to delete otherwise it creates a new file
-            copyFileToSaf(context, file, targetDir, fileInfo);
+            replaceFileToSaf(context, file, targetDir, fileInfo);
         }
     }
 
@@ -202,7 +199,29 @@ public class FileStorageService {
                         out.write(buffer, 0, len);
                     }
                 }
+                fileInfo.setSafUri(newFile.getUri().toString());
                 fileInfo.setSafModificationTime(newFile.lastModified());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void replaceFileToSaf(Context context, File sourceFile, DocumentFile targetDir, FileRegistry fileInfo) {
+        String filename = fileInfo.getName();
+        try {
+            // Create a new file in the SAF target directory
+            DocumentFile targetFile = targetDir.findFile(filename);
+            if (targetFile != null) {
+                try (InputStream in = new FileInputStream(sourceFile);
+                     OutputStream out = context.getContentResolver().openOutputStream(targetFile.getUri(), "wt")) {
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int len;
+                    while ((len = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, len);
+                    }
+                }
+                fileInfo.setSafModificationTime(targetFile.lastModified());
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -216,8 +235,6 @@ public class FileStorageService {
         Arrays.sort(files, Comparator.comparing(SAFFileInfo::getFileName));
 
         FileRegistry[] registry = filesRegistryMap.values().toArray(new FileRegistry[0]);
-
-        // Arrays.sort(registry, Comparator.comparing(FileRegistry::getName));
 
         int i = 0;
         int j = 0;

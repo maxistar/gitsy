@@ -47,6 +47,16 @@ public class AddProjectActivity extends AppCompatActivity {
                 saveProject();
             }
         });
+
+        Button testButton = this.findViewById(R.id.testButton);
+        // testButton.setVisibility(View.VISIBLE);
+        testButton.setOnClickListener(
+                v -> {
+                    openFolderPicker(REQUEST_CODE_OPEN_TEST_DIRECTORY);
+                }
+        );
+
+
     }
 
 

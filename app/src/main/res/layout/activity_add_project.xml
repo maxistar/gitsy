@@ -36,4 +36,15 @@
         android:layout_height="wrap_content"
         android:text="Save Project" />
 
+    <Button
+        android:id="@+id/testButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Create Test Folder"
+        android:visibility="gone"
+        />
+
+
+
+
 </LinearLayout>

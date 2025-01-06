@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.TreeMap;
 
 public class FileRegistry {
@@ -19,6 +18,8 @@ public class FileRegistry {
     public static final int NODE_FOLDER = 1;
 
     private String name; // Name of the file or folder
+    private String safUri;
+
     private int type; // "file" or "folder"
     private long size; // Size of the file (bytes)
     private long localModificationTime; // Last modification time of the local file
@@ -50,6 +51,14 @@ public class FileRegistry {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getSafUri() {
+        return safUri;
+    }
+
+    public void setSafUri(String safUri) {
+        this.safUri = safUri;
     }
 
     public int getType() {
