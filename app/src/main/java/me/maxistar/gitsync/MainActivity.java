@@ -28,6 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -77,6 +78,8 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL);
+        recyclerView.addItemDecoration(dividerItemDecoration);
 
         if (adapter == null) {
             adapter = new ProjectAdapter(new ArrayList<>(), this);
@@ -277,16 +280,10 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
-        if (itemId == R.id.menu_clone_repo) {
-            cloneRepository();
-        } else if (itemId == R.id.menu_sync) {
-            syncRepository();
-        } else if (itemId == R.id.menu_about) {
+        if (itemId == R.id.menu_about) {
             showAboutBox();
         } else if (itemId == R.id.menu_add_repo) {
             addRepository();
-        } else if (itemId == R.id.menu_reset_repo) {
-            clearRepository();
         }
         return super.onOptionsItemSelected(item);
     }
