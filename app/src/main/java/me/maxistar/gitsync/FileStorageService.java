@@ -141,7 +141,12 @@ public class FileStorageService {
         if (fileInfo.getType() == FileRegistry.NODE_FOLDER) {
             // Create a corresponding subdirectory in the target directory
             // Recursively copy files in this subdirectory
-            DocumentFile targetFile = DocumentFile.fromSingleUri(context, Uri.parse(fileInfo.getSafUri()));
+            Uri fileUri = DocumentsContract.buildDocumentUriUsingTree(
+                    targetDir.getUri(),
+                    fileInfo.getDocumentID());
+            DocumentFile targetFile = DocumentFile.fromTreeUri(context, fileUri);
+
+
             transferChangesRecursivelyToSaf(context, file, targetFile, fileInfo.getFiles());
         } else if (file.isFile()) {
             if (isFileUnchangedBasedOnRegistrySafTime(file, fileInfo)) {
@@ -175,6 +180,7 @@ public class FileStorageService {
             fileInfo = new FileRegistry(filename, FileRegistry.NODE_FOLDER);
             // should we put it inside?
             DocumentFile subDir = targetDir.createDirectory(filename);
+            fileInfo.setDocumentID(DocumentsContract.getDocumentId(subDir.getUri()));
             transferChangesRecursivelyToSaf(context, sourceFile, subDir, fileInfo.getFiles());
         } else {
             fileInfo = new FileRegistry(filename, FileRegistry.NODE_FILE);
@@ -199,7 +205,7 @@ public class FileStorageService {
                         out.write(buffer, 0, len);
                     }
                 }
-                fileInfo.setSafUri(newFile.getUri().toString());
+                fileInfo.setDocumentID(DocumentsContract.getDocumentId(newFile.getUri()));
                 fileInfo.setSafModificationTime(newFile.lastModified());
             }
         } catch (IOException e) {

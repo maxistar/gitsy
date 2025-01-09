@@ -18,7 +18,7 @@ public class FileRegistry {
     public static final int NODE_FOLDER = 1;
 
     private String name; // Name of the file or folder
-    private String safUri;
+    private String documentID;
 
     private int type; // "file" or "folder"
     private long size; // Size of the file (bytes)
@@ -53,12 +53,12 @@ public class FileRegistry {
         this.name = name;
     }
 
-    public String getSafUri() {
-        return safUri;
+    public String getDocumentID() {
+        return documentID;
     }
 
-    public void setSafUri(String safUri) {
-        this.safUri = safUri;
+    public void setDocumentID(String documentID) {
+        this.documentID = documentID;
     }
 
     public int getType() {
