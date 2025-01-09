@@ -39,14 +39,15 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
     @NonNull
     @Override
     public ProjectViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_1, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false);
         return new ProjectViewHolder(itemView, onProjectListener);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ProjectViewHolder holder, int position) {
         ProjectModel project = projectList.get(position);
-        holder.textView.setText(project.getRepoUrl() + statusToString(project.getStatus()));
+        holder.textView.setText(project.getRepoUrl());
+        holder.statusView.setText(statusToString(project.getStatus()));
     }
 
     private String statusToString(int status) {
@@ -75,11 +76,13 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
 
     static class ProjectViewHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener {
         TextView textView;
+        TextView statusView;
         OnProjectListener onProjectListener;
 
         public ProjectViewHolder(View itemView, OnProjectListener listener) {
             super(itemView);
-            textView = itemView.findViewById(android.R.id.text1);
+            textView = itemView.findViewById(R.id.item_title);
+            statusView = itemView.findViewById(R.id.item_status);
             this.onProjectListener = listener;
             itemView.setOnCreateContextMenuListener(this); // Register for context menu
         }
