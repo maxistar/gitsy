@@ -26,8 +26,6 @@ public class FileInfoEntry {
     private long safModificationTime; // Last modification time of the SAF file
     private TreeMap<String, FileInfoEntry> files; // Subtree for folders
 
-    public static final String TAG = "GitSyncDebug";
-
     // Constructor
     public FileInfoEntry(String name, int type) {
         this.name = name;
@@ -99,28 +97,5 @@ public class FileInfoEntry {
 
     public void setFiles(TreeMap<String, FileInfoEntry> files) {
         this.files = files;
-    }
-
-    public static void saveRegistryToFile(FileInfoEntry registry, File outputFile) {
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        try (FileWriter writer = new FileWriter(outputFile)) {
-            gson.toJson(registry, writer);
-            Log.w(TAG, "Registry saved to: " + outputFile.getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.w(TAG, "Failed to save registry.");
-        }
-    }
-
-    public static FileInfoEntry loadRegistryFromFile(File inputFile) {
-        Gson gson = new Gson();
-        try (FileReader reader = new FileReader(inputFile)) {
-            return gson.fromJson(reader, FileInfoEntry.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.w(TAG, "Failed to load registry.");
-            return new FileInfoEntry("", NODE_FOLDER);
-        }
     }
 }

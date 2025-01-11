@@ -28,6 +28,8 @@ public class ProjectModel {
 
     String folderUri;
 
+    int numberFiles;
+
     int status = STATUS_TO_CLONE;
 
     public ProjectModel(String repoUrl, String userName, String password, String folderUri) {
@@ -64,6 +66,14 @@ public class ProjectModel {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public int getNumberFiles() {
+        return numberFiles;
+    }
+
+    public void setNumberFiles(int numberFiles) {
+        this.numberFiles = numberFiles;
     }
 
     private String generateFolderName() {

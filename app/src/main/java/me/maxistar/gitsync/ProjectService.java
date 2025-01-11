@@ -144,13 +144,14 @@ public class ProjectService extends Service {
 
             updateNotification("Moving Files to SAF");
 
-            fileStorageService.copyToSaf(
+            int totalFiles = fileStorageService.copyToSaf(
                     getApplicationContext(),
                     project.getFolderName(),
                     Uri.parse(project.getFolderUri())
             );
 
             project.setStatus(ProjectModel.STATUS_READY);
+            project.setNumberFiles(totalFiles);
             EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
         } catch (Exception e) {
             project.setStatus(ProjectModel.STATUS_CLONING_ERROR);

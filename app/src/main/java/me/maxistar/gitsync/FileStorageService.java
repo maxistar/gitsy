@@ -24,12 +24,13 @@ public class FileStorageService {
     public static final String TAG = "GitSyncDebug";
     public static final int BUFFER_SIZE = 1024;
 
-    private FileInfoEntry localRegistry;
+    private FileRegistry localRegistry;
 
     public FileStorageService() {
     }
 
-    public void copyToSaf(Context context, String sourceDirName, Uri treeUri) {
+    public int copyToSaf(Context context, String sourceDirName, Uri treeUri) {
+        CopyToSafResult result = new CopyToSafResult();
         String registryFilename = sourceDirName + ".json";
         loadRegistry(context, registryFilename);
         Log.d(TAG, "Move Files to SAF");
@@ -44,10 +45,11 @@ public class FileStorageService {
 
         DocumentFile pickedDir = DocumentFile.fromTreeUri(context, childrenUri);
 
-        transferChangesRecursivelyToSaf(context, sourceDir, pickedDir, localRegistry.getFiles());
+        transferChangesRecursivelyToSaf(context, sourceDir, pickedDir, localRegistry.rootEntry.getFiles(), result);
         saveLocalRegistry(context, registryFilename);
 
         Log.d(TAG, "Stop Moving Files to SAF");
+        return result.totalFilesNumber;
     }
 
     public void copyFromSaf(Context context, Uri treeUri, String destinationDirName) {
@@ -64,7 +66,7 @@ public class FileStorageService {
         );
 
         // Recursively copy files from SAF to internal storage
-        transferChangesRecursivelyFromSaf(context, childrenUri, destinationDir, localRegistry.getFiles());
+        transferChangesRecursivelyFromSaf(context, childrenUri, destinationDir, localRegistry.rootEntry.getFiles());
         saveLocalRegistry(context, registryFilename);
 
         Log.d(TAG, "Stop Moving Files from SAF");
@@ -82,15 +84,15 @@ public class FileStorageService {
     private void loadRegistry(Context context, String registryFilename) {
         Log.d(TAG, "load registry");
         File localDir = new File(context.getFilesDir(), registryFilename);
-        localRegistry = FileInfoEntry.loadRegistryFromFile(localDir);
+        localRegistry = FileRegistry.loadRegistryFromFile(localDir);
     }
 
     private void saveLocalRegistry(Context context, String registryFilename) {
         File localDir = new File(context.getFilesDir(), registryFilename);
-        FileInfoEntry.saveRegistryToFile(localRegistry, localDir);
+        FileRegistry.saveRegistryToFile(localRegistry, localDir);
     }
 
-    private void transferChangesRecursivelyToSaf(Context context, File sourceDir, DocumentFile targetDir, TreeMap<String, FileInfoEntry> filesRegistryMap) {
+    private void transferChangesRecursivelyToSaf(Context context, File sourceDir, DocumentFile targetDir, TreeMap<String, FileInfoEntry> filesRegistryMap, CopyToSafResult result) {
 
         File[] files = sourceDir.listFiles();
 
@@ -104,7 +106,7 @@ public class FileStorageService {
         while (i < registry.length || j < files.length) {
             if (i == registry.length) {
                 // add a new file
-                handleAddingToSaf(context, files[j], targetDir, filesRegistryMap);
+                handleAddingToSaf(context, files[j], targetDir, filesRegistryMap, result);
                 j++;
                 continue;
             }
@@ -117,7 +119,7 @@ public class FileStorageService {
             if (!registry[i].getName().equals(files[j].getName())) {
                 // to decide later add of remove
                 if (registry[i].getName().compareTo(files[j].getName()) > 0) {
-                    handleAddingToSaf(context, files[j], targetDir, filesRegistryMap);
+                    handleAddingToSaf(context, files[j], targetDir, filesRegistryMap, result);
                     j++;
                 } else {
                     handleRemovingToSaf(registry[i].getName(), targetDir, filesRegistryMap);
@@ -127,13 +129,13 @@ public class FileStorageService {
                 continue;
             }
             // apply changes fo current file of directory if any
-            handleChangesToSaf(context, files[j], targetDir, registry[i]);
+            handleChangesToSaf(context, files[j], targetDir, registry[i], result);
             j++;
             i++;
         }
     }
 
-    private void handleChangesToSaf(Context context, File file, DocumentFile targetDir, FileInfoEntry fileInfo) {
+    private void handleChangesToSaf(Context context, File file, DocumentFile targetDir, FileInfoEntry fileInfo, CopyToSafResult result) {
         String filename = fileInfo.getName();
         if (".git".equals(filename)) {
             return;
@@ -147,8 +149,9 @@ public class FileStorageService {
             DocumentFile targetFile = DocumentFile.fromTreeUri(context, fileUri);
 
 
-            transferChangesRecursivelyToSaf(context, file, targetFile, fileInfo.getFiles());
+            transferChangesRecursivelyToSaf(context, file, targetFile, fileInfo.getFiles(), result);
         } else if (file.isFile()) {
+            result.totalFilesNumber++;
             if (isFileUnchangedBasedOnRegistrySafTime(file, fileInfo)) {
                 // Log.d(TAG, "Skipping unchanged file: " + targetFile.getAbsolutePath());
                 // no changed needed
@@ -169,7 +172,7 @@ public class FileStorageService {
         filesRegistryMap.remove(filename);
     }
 
-    private void handleAddingToSaf(Context context, File sourceFile, DocumentFile targetDir, TreeMap<String, FileInfoEntry> filesRegistryMap) {
+    private void handleAddingToSaf(Context context, File sourceFile, DocumentFile targetDir, TreeMap<String, FileInfoEntry> filesRegistryMap, CopyToSafResult result) {
         String filename = sourceFile.getName();
         if (".git".equals(filename)) {
             return;
@@ -181,8 +184,9 @@ public class FileStorageService {
             // should we put it inside?
             DocumentFile subDir = targetDir.createDirectory(filename);
             fileInfo.setDocumentID(DocumentsContract.getDocumentId(subDir.getUri()));
-            transferChangesRecursivelyToSaf(context, sourceFile, subDir, fileInfo.getFiles());
+            transferChangesRecursivelyToSaf(context, sourceFile, subDir, fileInfo.getFiles(), result);
         } else {
+            result.totalFilesNumber++;
             fileInfo = new FileInfoEntry(filename, FileInfoEntry.NODE_FILE);
             fileInfo.setLocalModificationTime(sourceFile.lastModified());
             fileInfo.setSize(sourceFile.length());
@@ -402,5 +406,9 @@ public class FileStorageService {
             }
         }
         return directory != null && directory.delete();
+    }
+
+    static class CopyToSafResult {
+        int totalFilesNumber = 0;
     }
 }

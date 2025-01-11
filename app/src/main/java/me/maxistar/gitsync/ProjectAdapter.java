@@ -48,6 +48,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
         ProjectModel project = projectList.get(position);
         holder.textView.setText(project.getRepoUrl());
         holder.statusView.setText(statusToString(project.getStatus()));
+        holder.filesView.setText("files: " + project.getNumberFiles());
     }
 
     private String statusToString(int status) {
@@ -77,12 +78,15 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
     static class ProjectViewHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener {
         TextView textView;
         TextView statusView;
+
+        TextView filesView;
         OnProjectListener onProjectListener;
 
         public ProjectViewHolder(View itemView, OnProjectListener listener) {
             super(itemView);
             textView = itemView.findViewById(R.id.item_title);
             statusView = itemView.findViewById(R.id.item_status);
+            filesView = itemView.findViewById(R.id.item_files);
             this.onProjectListener = listener;
             itemView.setOnCreateContextMenuListener(this); // Register for context menu
         }
