@@ -11,7 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.TreeMap;
 
-public class FileRegistry {
+public class FileInfoEntry {
 
     public static final int NODE_FILE = 0;
 
@@ -24,19 +24,19 @@ public class FileRegistry {
     private long size; // Size of the file (bytes)
     private long localModificationTime; // Last modification time of the local file
     private long safModificationTime; // Last modification time of the SAF file
-    private TreeMap<String, FileRegistry> files; // Subtree for folders
+    private TreeMap<String, FileInfoEntry> files; // Subtree for folders
 
     public static final String TAG = "GitSyncDebug";
 
     // Constructor
-    public FileRegistry(String name, int type) {
+    public FileInfoEntry(String name, int type) {
         this.name = name;
         this.type = type;
         this.size = 0;
         this.localModificationTime = 0;
         this.safModificationTime = 0;
         if (type == NODE_FOLDER) {
-            this.files = new TreeMap<String, FileRegistry>(
+            this.files = new TreeMap<String, FileInfoEntry>(
                     String::compareTo
             );
         } else {
@@ -93,15 +93,15 @@ public class FileRegistry {
         this.safModificationTime = safModificationTime;
     }
 
-    public TreeMap<String, FileRegistry> getFiles() {
+    public TreeMap<String, FileInfoEntry> getFiles() {
         return files;
     }
 
-    public void setFiles(TreeMap<String, FileRegistry> files) {
+    public void setFiles(TreeMap<String, FileInfoEntry> files) {
         this.files = files;
     }
 
-    public static void saveRegistryToFile(FileRegistry registry, File outputFile) {
+    public static void saveRegistryToFile(FileInfoEntry registry, File outputFile) {
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try (FileWriter writer = new FileWriter(outputFile)) {
@@ -113,14 +113,14 @@ public class FileRegistry {
         }
     }
 
-    public static FileRegistry loadRegistryFromFile(File inputFile) {
+    public static FileInfoEntry loadRegistryFromFile(File inputFile) {
         Gson gson = new Gson();
         try (FileReader reader = new FileReader(inputFile)) {
-            return gson.fromJson(reader, FileRegistry.class);
+            return gson.fromJson(reader, FileInfoEntry.class);
         } catch (IOException e) {
             e.printStackTrace();
             Log.w(TAG, "Failed to load registry.");
-            return new FileRegistry("", NODE_FOLDER);
+            return new FileInfoEntry("", NODE_FOLDER);
         }
     }
 }
