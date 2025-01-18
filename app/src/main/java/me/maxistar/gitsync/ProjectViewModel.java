@@ -61,4 +61,13 @@ public class ProjectViewModel extends ViewModel {
             projects.setValue(repository.getProjects());
         }
     }
+
+    public void syncAllProjects(Context context) {
+        List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
+        for (ProjectModel model : currentProjects) {
+            model.setStatus(ProjectModel.STATUS_TO_SYNC);
+        }
+        repository.saveProjects(context);
+        projects.setValue(repository.getProjects());
+    }
 }

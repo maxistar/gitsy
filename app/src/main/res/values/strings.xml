@@ -5,4 +5,5 @@
     <string name="ResetRepo">Reset Repo</string>
     <string name="SyncRepo">Synchronize Repo</string>
     <string name="AddRepo">Add Repo</string>
+    <string name="SyncAll">Sync All</string>
 </resources>

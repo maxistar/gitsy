@@ -39,34 +39,6 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements ProjectAdapter.OnProjectListener {
 
-    public static final String GIT_REMOTE_ADDRESS = "git_remote_address";
-    public static final String GIT_REMOTE_USER = "git_remote_user";
-    public static final String GIT_REMOTE_PASSWORD = "git_remote_password";
-    public static final String TAG = "GitSyncDebug";
-    // static final String FOLDER_NAME = "temp-repo";
-
-
-    static Uri folderUrl;
-
-    static boolean isSynchronizing = false;
-
-    static boolean isCloning = false;
-
-    static String gitRemoteAddress;
-
-    static String gitRemoteUser;
-
-    static String gitRemotePassword;
-
-
-    Button cloneButton;
-
-    Button syncButton;
-
-    Button testButton;
-
-
-
     private ProjectViewModel viewModel;
     private RecyclerView recyclerView;
     private ProjectAdapter adapter;
@@ -110,48 +82,8 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
             }
         });
 
+        new Handler().postDelayed(this::syncAllRepos, 1000);
 
-/*        super.onCreate(savedInstanceState);
-
-
-        setContentView(R.layout.activity_main);
-
-        folderUrl = getFolderUri();
-        gitRemoteAddress = getStoredValue(GIT_REMOTE_ADDRESS);
-        gitRemoteUser = getStoredValue(GIT_REMOTE_USER);
-        gitRemotePassword = getStoredValue(GIT_REMOTE_PASSWORD);
-
-        repoUrlEditor = this.findViewById(R.id.repoUrlEditor);
-        repoUrlEditor.setText(gitRemoteAddress);
-        userNameEditor = this.findViewById(R.id.userNameEditor);
-        userNameEditor.setText(gitRemoteUser);
-        passwordEditor = this.findViewById(R.id.passwordEditor);
-        passwordEditor.setText(gitRemotePassword);
-
-        cloneButton = this.findViewById(R.id.cloneButton);
-        cloneButton.setOnClickListener(
-                v -> {
-                    cloneRepository();
-                }
-        );
-
-        testButton = this.findViewById(R.id.testButton);
-        //testButton.setVisibility(View.VISIBLE);
-        testButton.setOnClickListener(
-                v -> {
-                    openFolderPicker(REQUEST_CODE_OPEN_TEST_DIRECTORY);
-                }
-        );
-
-        syncButton = this.findViewById(R.id.syncButton);
-        syncButton.setOnClickListener(
-                v -> {
-                    syncRepository();
-                }
-        );
-
-        updateUiState();
-*/
     }
 
     @Override
@@ -181,37 +113,6 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         viewModel.deleteProject(getApplicationContext(), position);
     }
 
-
-    void syncRepository() {
-        isSynchronizing = true;
-        updateUiState();
-        //new SyncRepoTask(this, gitService, fileStorageService).execute();
-    }
-
-    void clearRepository() {
-        /*
-        File tempDir = new File(getFilesDir(), FOLDER_NAME);
-        //fileStorageService.deleteDirectoryRecursivelyAndSaveRegistry(MainActivity.this, tempDir);
-        resetFolderUri();
-        updateUiState();
-         */
-    }
-
-    void cloneRepository() {
-        /*
-        isCloning = true;
-        storeStringValue(GIT_REMOTE_ADDRESS, String.valueOf(repoUrlEditor.getText()));
-        gitRemoteAddress = String.valueOf(repoUrlEditor.getText());
-
-        storeStringValue(GIT_REMOTE_USER, String.valueOf(userNameEditor.getText()));
-        gitRemoteUser = String.valueOf(userNameEditor.getText());
-
-        storeStringValue(GIT_REMOTE_PASSWORD, String.valueOf(passwordEditor.getText()));
-        gitRemotePassword = String.valueOf(passwordEditor.getText());
-        updateUiState();
-        openFolderPicker(REQUEST_CODE_OPEN_DIRECTORY);
-        */
-    }
 
     void addRepository() {
         Intent intent = new Intent(MainActivity.this, AddProjectActivity.class);
@@ -263,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
 
-        if(menu instanceof MenuBuilder){
+        if (menu instanceof MenuBuilder) {
             MenuBuilder m = (MenuBuilder) menu;
             m.setOptionalIconsVisible(true);
         }
@@ -284,93 +185,16 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
             showAboutBox();
         } else if (itemId == R.id.menu_add_repo) {
             addRepository();
+        } else if (itemId == R.id.menu_sync_all) {
+            syncAllRepos();
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateUiState() {
-        boolean repoNotInitialized = folderUrl == null;
-
-        /*
-        repoUrlEditor.setEnabled(repoNotInitialized && !isCloning);
-        userNameEditor.setEnabled(repoNotInitialized && !isCloning);
-        passwordEditor.setEnabled(repoNotInitialized && !isCloning);
-         */
-        cloneButton.setEnabled(repoNotInitialized && !isCloning);
-        syncButton.setEnabled(!repoNotInitialized && !isSynchronizing && !isCloning);
-    }
-
-    private void storeFolderUri(Uri folderUri) {
-        storeStringValue("folder_uri", folderUri.toString());
-    }
-
-
-
-    private void storeStringValue(String name, String value) {
-        SharedPreferences sharedPreferences = getSharedPreferences("MyAppPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(name, value);
-        editor.apply();
-    }
-
-    private void resetFolderUri() {
-        SharedPreferences sharedPreferences = getSharedPreferences("MyAppPrefs", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove("folder_uri");
-        editor.apply();
-        folderUrl = null;
-    }
-
-    private Uri getFolderUri() {
-        String value = getStoredValue("folder_uri");
-        if (value.isEmpty()) {
-            return null;
-        }
-        return Uri.parse(value);
-    }
-
-    private String getStoredValue(String name) {
-        SharedPreferences sharedPreferences = getSharedPreferences("MyAppPrefs", MODE_PRIVATE);
-        return sharedPreferences.getString(name, "");
-    }
-
-    private class SyncRepoTask extends AsyncTask<Void, Void, String> {
-
-        Context context;
-        GitService gitService;
-
-        FileStorageService fileStorageService;
-
-        public SyncRepoTask(Context context, GitService gitService, FileStorageService fileStorageService) {
-            this.context = context.getApplicationContext();
-            this.gitService = gitService;
-            this.fileStorageService = fileStorageService;
-        }
-
-        @Override
-        protected String doInBackground(Void... voids) {
-            try {
-                /*
-                fileStorageService.copyFromSaf(context, folderUrl, FOLDER_NAME);
-
-                gitService.syncRepository(context, FOLDER_NAME, gitRemoteUser, gitRemotePassword);
-
-                fileStorageService.copyToSaf(context, FOLDER_NAME, folderUrl);
-
-                */
-                return "Files synchronized successfully!";
-            } catch (Exception e) {
-                return "Error: " + e.getMessage();
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            // Update the UI after cloning
-            Toast.makeText(context, result, Toast.LENGTH_LONG).show();
-            isSynchronizing = false;
-            updateUiState();
-        }
+    private void syncAllRepos() {
+        viewModel.syncAllProjects(getApplicationContext());
+        Intent startIntent = new Intent(this, ProjectService.class);
+        startService(startIntent);
     }
 
 }
