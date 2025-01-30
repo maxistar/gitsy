@@ -117,6 +117,7 @@ public class ProjectService extends Service {
 
 
             project.setStatus(ProjectModel.STATUS_READY);
+            project.setLastSync(System.currentTimeMillis());
             EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
 
 

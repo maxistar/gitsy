@@ -1,6 +1,7 @@
 package me.maxistar.gitsync;
 
 import android.content.Context;
+import android.content.Intent;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -69,5 +70,25 @@ public class ProjectViewModel extends ViewModel {
         }
         repository.saveProjects(context);
         projects.setValue(repository.getProjects());
+    }
+
+
+    public void syncAllProjectsOlderThanHour(Context context) {
+        List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
+        long currentTime = System.currentTimeMillis();
+        boolean triggerService = false;
+        for (ProjectModel model : currentProjects) {
+            if (currentTime - model.getLastSync() > 60 * 60 * 1000) {
+                model.setStatus(ProjectModel.STATUS_TO_SYNC);
+                triggerService = true;
+            }
+        }
+        if (triggerService) {
+            repository.saveProjects(context);
+            projects.setValue(repository.getProjects());
+
+            Intent startIntent = new Intent(context, ProjectService.class);
+            context.startService(startIntent);
+        }
     }
 }

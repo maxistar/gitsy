@@ -48,7 +48,22 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
         ProjectModel project = projectList.get(position);
         holder.textView.setText(project.getRepoUrl());
         holder.statusView.setText(statusToString(project.getStatus()));
-        holder.filesView.setText("files: " + project.getNumberFiles());
+        String lastChanges = formatLastSync(project.getLastSync());
+        holder.filesView.setText("files: " + project.getNumberFiles() + lastChanges);
+    }
+
+    private String formatLastSync(long lastSync) {
+        long now = System.currentTimeMillis();
+        if (now - lastSync < 60 * 1000) {
+            return ", " + Math.round((now - lastSync) / 1000.0) + "s ago";
+        } else if (now - lastSync < 3600 * 1000) {
+            return ", " + Math.round((now - lastSync) / (60.0 * 1000)) + "m ago";
+        } else if (now - lastSync < 24 * 3600 * 1000) {
+            return ", " + Math.round((now - lastSync) / (3600.0 * 1000)) + "m ago";
+        } else {
+            return ", " + Math.round((now - lastSync) / (24.0 * 3600 * 1000)) + "d ago";
+        }
+
     }
 
     private String statusToString(int status) {

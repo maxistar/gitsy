@@ -2,6 +2,8 @@ package me.maxistar.gitsync;
 
 import android.net.Uri;
 
+import java.util.Date;
+
 public class ProjectModel {
 
     static final int STATUS_TO_CLONE = 0;
@@ -28,7 +30,17 @@ public class ProjectModel {
 
     String folderUri;
 
+    long lastSync;
+
     int numberFiles;
+
+    public long getLastSync() {
+        return lastSync;
+    }
+
+    public void setLastSync(long lastSync) {
+        this.lastSync = lastSync;
+    }
 
     int status = STATUS_TO_CLONE;
 

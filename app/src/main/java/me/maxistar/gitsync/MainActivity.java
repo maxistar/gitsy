@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
             }
         });
 
-        new Handler().postDelayed(this::syncAllRepos, 1000);
+        new Handler().postDelayed(this::syncAllReposOlderThanHour, 1000);
 
     }
 
@@ -196,5 +196,10 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         Intent startIntent = new Intent(this, ProjectService.class);
         startService(startIntent);
     }
+
+    private void syncAllReposOlderThanHour() {
+        viewModel.syncAllProjectsOlderThanHour(getApplicationContext());
+    }
+
 
 }
