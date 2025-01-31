@@ -59,7 +59,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
         } else if (now - lastSync < 3600 * 1000) {
             return ", " + Math.round((now - lastSync) / (60.0 * 1000)) + "m ago";
         } else if (now - lastSync < 24 * 3600 * 1000) {
-            return ", " + Math.round((now - lastSync) / (3600.0 * 1000)) + "m ago";
+            return ", " + Math.round((now - lastSync) / (3600.0 * 1000)) + "h ago";
         } else {
             return ", " + Math.round((now - lastSync) / (24.0 * 3600 * 1000)) + "d ago";
         }
