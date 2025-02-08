@@ -152,7 +152,7 @@ public class FileStorageService {
             transferChangesRecursivelyToSaf(context, file, targetFile, fileInfo.getFiles(), result);
         } else if (file.isFile()) {
             result.totalFilesNumber++;
-            if (isFileUnchangedBasedOnRegistrySafTime(file, fileInfo)) {
+            if (isFileUnchanged(file, fileInfo)) {
                 // Log.d(TAG, "Skipping unchanged file: " + targetFile.getAbsolutePath());
                 // no changed needed
                 return;
@@ -320,7 +320,7 @@ public class FileStorageService {
             // Recursively copy files in this subdirectory
             transferChangesRecursivelyFromSaf(context, file.getUri(), targetFile, fileInfo.getFiles());
         } else if (file.isFile()) {
-            if (isFileUnchangedBasedOnStoredLocalTime(file, fileInfo)) {
+            if (isFileUnchanged(file, fileInfo)) {
                 // Log.d(TAG, "Skipping unchanged file: " + targetFile.getAbsolutePath());
                 // no changed needed
                 return;
@@ -330,36 +330,34 @@ public class FileStorageService {
         }
     }
 
-    private boolean isFileUnchangedBasedOnStoredLocalTime(SAFFileInfo sourceFile, FileInfoEntry targetFile) {
+    private boolean isFileUnchanged(SAFFileInfo sourceFile, FileInfoEntry targetFile) {
         if (sourceFile.getSize() != targetFile.getSize()) {
             return false;
         }
         // SAF doesn't provide a direct last-modified timestamp, so rely on metadata
         long sourceLastModified = sourceFile.getModificationTime();
-        long targetLastModified = targetFile.getLocalModificationTime();
+        long targetLastModified = targetFile.getSafModificationTime();
 
         if (sourceLastModified == 0 || targetLastModified == 0) {
             return false; // Treat as changed if timestamps are unavailable
         }
 
         // If the source file's modification time is greater, the file has changed
-        return sourceLastModified != targetLastModified;
+        return sourceLastModified == targetLastModified;
     }
 
-    private boolean isFileUnchangedBasedOnRegistrySafTime(File sourceFile, FileInfoEntry targetFile) {
+    private boolean isFileUnchanged(File sourceFile, FileInfoEntry targetFile) {
         if (sourceFile.length() != targetFile.getSize()) {
             return false;
         }
-        //Log.d(TAG, "source: " + sourceLastModified + "target: " + targetLastModified);
         long sourceLastModified = sourceFile.lastModified();
-        long targetLastModified = targetFile.getSafModificationTime();
+        long targetLastModified = targetFile.getLocalModificationTime();
         if (sourceLastModified == 0 || targetLastModified == 0) {
-            // Log.d(TAG, "source of target time is null");
             return false; // Treat as changed if timestamps are unavailable
         }
 
         // If the source file's modification time is greater, the file has changed
-        return sourceLastModified != targetLastModified;
+        return sourceLastModified == targetLastModified;
     }
 
     private void copyFileFromSaf(Context context, SAFFileInfo sourceFile, File targetFile, FileInfoEntry fileInfo) {
