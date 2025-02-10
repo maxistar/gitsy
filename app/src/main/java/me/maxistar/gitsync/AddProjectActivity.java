@@ -9,7 +9,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.ViewModelProvider;
 
 public class AddProjectActivity extends AppCompatActivity {
@@ -83,7 +86,11 @@ public class AddProjectActivity extends AppCompatActivity {
                 // folderUrl = folderUri;
 
                 // new MainActivity.CloneRepoTask(this, gitService, fileStorageService).execute();
-                saveAndClose(folderUri.toString());
+                if (checkIfDirectoryIsEmpty(folderUri)) {
+                    showAlertDialog();
+                } else {
+                    saveAndClose(folderUri.toString());
+                }
                 Log.d(TAG, "Selected Folder URI: " + folderUri.toString());
             }
         } else if (requestCode == REQUEST_CODE_OPEN_TEST_DIRECTORY && resultCode == RESULT_OK) {
@@ -134,6 +141,23 @@ public class AddProjectActivity extends AppCompatActivity {
         startService(startIntent);
 
         finish();
+    }
+
+    private boolean checkIfDirectoryIsEmpty(Uri uri) {
+        DocumentFile pickedDir = DocumentFile.fromTreeUri(this, uri);
+        if (pickedDir != null && pickedDir.exists()) {
+            DocumentFile[] files = pickedDir.listFiles();
+            return files.length > 0;
+        }
+        return false;
+    }
+
+    private void showAlertDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Non-Empty Folder")
+                .setMessage("The folder must be empty in order to proceed.")
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     private void saveProject() {
