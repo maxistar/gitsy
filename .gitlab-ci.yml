@@ -10,7 +10,6 @@ build:
     - fomalgaut
   script:
     - echo "Building"
-    - cp local.properties.dist local.properties
     - gradle assembleDebug --no-daemon
     - gradle compileDebugSources
     - gradle compileDebugAndroidTestSources
