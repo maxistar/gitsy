@@ -1,0 +1,18 @@
+image: maxistar/android:latest
+
+stages:
+  - build
+
+
+build:
+  stage: build
+  tags:
+    - fomalgaut
+  script:
+    - echo "Building"
+    - cp local.properties.dist local.properties
+    - gradle assembleDebug --no-daemon
+    - gradle compileDebugSources
+    - gradle compileDebugAndroidTestSources
+    - gradle assembleAndroidTest --no-daemon
+
