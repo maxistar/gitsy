@@ -7,9 +7,12 @@ import android.app.Service;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.List;
 
 public class ProjectService extends Service {
@@ -100,6 +103,10 @@ public class ProjectService extends Service {
 
             updateNotification("Synchronization");
 
+// todo auto fix when locked
+//            File lockFile = new File("/data/user/0/me.maxistar.gitsync/files/project_1738597560466/.git/index.lock");
+//            lockFile.delete();
+
             gitService.syncRepository(
                     getApplicationContext(),
                     project.getFolderName(),
@@ -122,9 +129,24 @@ public class ProjectService extends Service {
 
 
         } catch (Exception e) {
+
+
+
             project.setStatus(ProjectModel.STATUS_SYNC_ERROR);
+
+
+
             EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
-            Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+
+
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+
+
         }
     }
 
@@ -157,7 +179,13 @@ public class ProjectService extends Service {
         } catch (Exception e) {
             project.setStatus(ProjectModel.STATUS_CLONING_ERROR);
             EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
-            Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();                }
+            });
+
         }
     }
 
