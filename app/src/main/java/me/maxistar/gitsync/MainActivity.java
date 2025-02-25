@@ -198,7 +198,9 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     }
 
     private void syncAllReposOlderThanHour() {
-        viewModel.syncAllProjectsOlderThanHour(getApplicationContext());
+        if (viewModel.allElementsAreReady()) {
+            viewModel.syncAllProjectsOlderThanHour(getApplicationContext());
+        }
     }
 
 

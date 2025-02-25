@@ -91,4 +91,14 @@ public class ProjectViewModel extends ViewModel {
             context.startService(startIntent);
         }
     }
+
+    public boolean allElementsAreReady() {
+        List<ProjectModel> currentProjects = repository.getProjects();
+        for (ProjectModel model : currentProjects) {
+            if (model.getStatus() == ProjectModel.STATUS_TO_SYNC || model.getStatus() == ProjectModel.STATUS_SYNC_IN_PROGRESS) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
