@@ -47,6 +47,7 @@ public class ProjectService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Toast.makeText(getApplicationContext(), "Service Started", Toast.LENGTH_LONG).show();
         startForeground(NOTIFICATION_ID, getNotification("Starting Service..."));
+        ServiceLocator.getInstance().getWakeLockService().acquireLock(getApplicationContext());
         // Perform long-running task in a background thread and update notification text
         performTaskAndUpdateNotification();
         return START_STICKY;
@@ -84,6 +85,7 @@ public class ProjectService extends Service {
 
 
             stopSelf();
+            ServiceLocator.getInstance().getWakeLockService().releaseLock();
         }).start();
     }
 
