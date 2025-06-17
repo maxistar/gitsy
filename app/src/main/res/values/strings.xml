@@ -6,4 +6,6 @@
     <string name="SyncRepo">Synchronize Repo</string>
     <string name="AddRepo">Add Repo</string>
     <string name="SyncAll">Sync All</string>
+    <string name="delete_project_title">Delete Project</string>
+    <string name="delete_project_message">Are you sure you want to delete this project?</string>
 </resources>

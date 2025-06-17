@@ -93,10 +93,21 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         adapter.notifyDataSetChanged();
     }
 
+    private void deleteProjectById(int groupId) {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.delete_project_title)
+            .setMessage(R.string.delete_project_message)
+            .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                viewModel.deleteProject(getApplicationContext(), groupId); // groupId used as the position
+            })
+            .setNegativeButton(android.R.string.no, null)
+            .show();
+    }
+
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == 0) { // Delete option
-            viewModel.deleteProject(getApplicationContext(), item.getGroupId()); // groupId used as the position
+            deleteProjectById(item.getGroupId());
             return true;
         }
         if (item.getItemId() == 1) { // Synchronyze option
