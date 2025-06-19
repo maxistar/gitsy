@@ -158,12 +158,12 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         TextView appWebsite = dialogView.findViewById(R.id.app_website);
 
         termsAndConditions.setOnClickListener(v -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com/terms"));
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://gitsy.de/terms"));
             startActivity(browserIntent);
         });
 
         appWebsite.setOnClickListener(v -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com"));
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://gitsy.de/"));
             startActivity(browserIntent);
         });
 
