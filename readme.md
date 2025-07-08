@@ -6,6 +6,10 @@
 - make sure uri of selected folder in unit test properly hardcoded
 - test runs only ones after each run it should be selected again!
 
+## Integrations Tests with appium
+
+- start appium
+- 
 
 ## Gradle
 

@@ -1,15 +1,12 @@
 import { expect, test } from "vitest";
 import { remote } from "webdriverio";
 
-test("adds 1 + 2 to equal 3", async () => {
-  expect(3).toBe(3);
+test("Shows version on about dialog", async () => {
 
   const capabilities = {
     platformName: "Android",
     "appium:automationName": "UiAutomator2",
     //  'appium:deviceName': 'emulator-5554',
-    "appium:appPackage": "me.maxistar.gitsync",
-    "appium:appActivity": ".MainActivity'",
     "appium:autoGrantPermissions": true,
     "appium:noReset": true
   };
@@ -21,18 +18,26 @@ test("adds 1 + 2 to equal 3", async () => {
     capabilities,
   };
 
+
   const driver = await remote(wdOpts);
+
+  await driver.startActivity("me.maxistar.gitsync", "me.maxistar.gitsync.MainActivity");
+
   const el1 = await driver.$("id:com.maxistar.textpad:id/editText1");
-//  await el1.addValue("some text");
-//  const el2 = await driver.$("accessibility id:More options");
-//  await el2.click();
-//  const el3 = await driver.$(
-//    'xpath://android.widget.TextView[@resource-id="com.maxistar.textpad:id/title" and @text="Save"]'
-//  );
-//  await el3.click();
-//  const el4 = await driver.$("class name:android.widget.EditText");
-//  await el4.clearValue();
-//  await el4.addValue("somefilename.txt");
-//  const el5 = await driver.$("id:android:id/button1");
-//  await el5.click();
+  const el2 = await driver.$("accessibility id:More options");
+  await el2.click();
+  const el3 = await driver.$(
+    'xpath://android.widget.TextView[@resource-id="me.maxistar.gitsync:id/title" and @text="About"]'
+  );
+  await el3.click();
+
+  const aboutLink = await driver.$('//android.widget.TextView[@resource-id="me.maxistar.gitsync:id/app_info"]');
+  expect(await aboutLink.getText()).toBe('Android GitSync\nVersion 0.0.1');
+
+//  const conditionsLink = await driver.$('//android.widget.TextView[@resource-id="me.maxistar.gitsync:id/app_website"]');
+//  await conditionsLink.click();
+
+  const closeButton = await driver.$('//android.widget.Button[@resource-id="android:id/button1"]');
+  await closeButton.click();
+
 });
