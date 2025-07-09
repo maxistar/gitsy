@@ -111,6 +111,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
             menu.add(this.getAdapterPosition(), 0, 0, "Delete");
             menu.add(this.getAdapterPosition(), 1, 1, "Synchronize");
         }
+
     }
 }
 

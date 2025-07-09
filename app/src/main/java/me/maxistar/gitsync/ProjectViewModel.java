@@ -101,4 +101,8 @@ public class ProjectViewModel extends ViewModel {
         }
         return true;
     }
+
+    public boolean workInProgress() {
+        return !allElementsAreReady();
+    }
 }

@@ -106,18 +106,23 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
 
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
+        if (viewModel.workInProgress()) {
+            return false;
+        }
+
         if (item.getItemId() == 0) { // Delete option
             deleteProjectById(item.getGroupId());
             return true;
         }
         if (item.getItemId() == 1) { // Synchronyze option
             viewModel.syncProject(getApplicationContext(), item.getGroupId()); // groupId used as the position
-
             Intent startIntent = new Intent(this, ProjectService.class);
             startService(startIntent);
         }
         return false;
     }
+
+
 
     @Override
     public void onProjectDelete(int position) {
@@ -185,6 +190,14 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
+        // check if the projects are in progress and block unsafe items
+        boolean blockMenu = !viewModel.workInProgress();
+
+        MenuItem addRepoMenu = menu.findItem(R.id.menu_add_repo);
+        addRepoMenu.setEnabled(blockMenu);
+
+        MenuItem syncAllMenu = menu.findItem(R.id.menu_sync_all);
+        syncAllMenu.setEnabled(blockMenu);
 
         return true;
     }
