@@ -24,6 +24,8 @@ public class ProjectService extends Service {
 
     GitService gitService;
 
+    public static boolean started = false;
+
 
     @Override
     public void onCreate() {
@@ -70,6 +72,7 @@ public class ProjectService extends Service {
     }
 
     private void performTaskAndUpdateNotification() {
+        started = true;
         new Thread(() -> {
             ProjectRepository repository = ProjectRepository.getInstance();
             List<ProjectModel> projects = repository.getProjects();
@@ -86,6 +89,7 @@ public class ProjectService extends Service {
 
             stopSelf();
             ServiceLocator.getInstance().getWakeLockService().releaseLock();
+            started = false;
         }).start();
     }
 

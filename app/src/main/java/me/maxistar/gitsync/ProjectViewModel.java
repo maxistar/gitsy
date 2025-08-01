@@ -105,4 +105,15 @@ public class ProjectViewModel extends ViewModel {
     public boolean workInProgress() {
         return !allElementsAreReady();
     }
+
+    public void resetProjectsStatus(Context applicationContext) {
+        List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
+
+        for (ProjectModel model : currentProjects) {
+                model.setStatus(ProjectModel.STATUS_READY);
+        }
+        repository.saveProjects(applicationContext);
+        projects.setValue(repository.getProjects());
+
+    }
 }

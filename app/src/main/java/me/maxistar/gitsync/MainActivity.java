@@ -82,6 +82,9 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
             }
         });
 
+
+
+        // if need to sync - sync it!
         new Handler().postDelayed(this::syncAllReposOlderThanHour, 1000);
 
     }
@@ -222,9 +225,26 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     }
 
     private void syncAllReposOlderThanHour() {
+        // check if application was kicked out
+        if (!ProjectService.started && viewModel.workInProgress()) {
+            // show message to clean up projects database
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.application_was_stopped)
+                    .setMessage(R.string.application_was_stopped_message)
+                    .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                        resetProjectsStatus();
+                    })
+                    .show();
+        }
+
+
         if (viewModel.allElementsAreReady()) {
             viewModel.syncAllProjectsOlderThanHour(getApplicationContext());
         }
+    }
+
+    private void resetProjectsStatus() {
+        viewModel.resetProjectsStatus(getApplicationContext());
     }
 
 
