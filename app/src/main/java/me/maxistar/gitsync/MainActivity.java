@@ -6,26 +6,18 @@ import androidx.appcompat.view.menu.MenuBuilder;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -33,7 +25,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 
-import java.io.File;
 import java.util.ArrayList;
 
 
@@ -131,6 +122,9 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     }
 
     private void editProjectById(int position) {
+        Intent intent = new Intent(this, EditProjectActivity.class);
+        intent.putExtra("position", position);
+        startActivity(intent);
     }
 
 
@@ -141,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
 
 
     void addRepository() {
-        Intent intent = new Intent(MainActivity.this, AddProjectActivity.class);
+        Intent intent = new Intent(MainActivity.this, EditProjectActivity.class);
         startActivity(intent);
     }
 

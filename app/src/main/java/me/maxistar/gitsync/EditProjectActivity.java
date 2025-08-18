@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.ViewModelProvider;
 
-public class AddProjectActivity extends AppCompatActivity {
+public class EditProjectActivity extends AppCompatActivity {
 
     public static final String TAG = "GitSyncDebug";
     EditText repoUrlEditor;
