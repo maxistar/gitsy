@@ -116,4 +116,9 @@ public class ProjectViewModel extends ViewModel {
         projects.setValue(repository.getProjects());
 
     }
+
+    public void setProject(ProjectModel project, int editPosition, Context applicationContext) {
+        repository.setProject(applicationContext, project, editPosition);
+        projects.setValue(repository.getProjects());
+    }
 }

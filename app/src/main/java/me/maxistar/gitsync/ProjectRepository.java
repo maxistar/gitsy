@@ -35,6 +35,11 @@ public class ProjectRepository {
         saveProjects(context);
     }
 
+    public void setProject(Context context, ProjectModel projectModel, int position) {
+        projects.set(position, projectModel);
+        saveProjects(context);
+    }
+
     public void deleteProject(Context context, int position) {
         projects.remove(position);
         saveProjects(context);

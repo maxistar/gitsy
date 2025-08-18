@@ -15,6 +15,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.ViewModelProvider;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class EditProjectActivity extends AppCompatActivity {
 
     public static final String TAG = "GitSyncDebug";
@@ -30,6 +33,8 @@ public class EditProjectActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_OPEN_TEST_DIRECTORY = 2;
 
+    private int editPosition = -1; // -1 means we're creating a new project
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,25 +46,43 @@ public class EditProjectActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(ProjectViewModel.class);
 
+        // Check if we're editing an existing project
+        Intent intent = getIntent();
+        if (intent != null && intent.hasExtra("position")) {
+            editPosition = intent.getIntExtra("position", -1);
+            if (editPosition != -1) {
+                // Load the project to edit
+                ProjectModel project = viewModel.getProjects().getValue().get(editPosition);
+                if (project != null) {
+                    repoUrlEditor.setText(project.getRepoUrl());
+                    userNameEditor.setText(project.getUserName());
+                    passwordEditor.setText(project.getPassword());
+                    // Update the button text to indicate we're editing
+                    saveButton = findViewById(R.id.buttonSaveProject);
+                    saveButton.setText(R.string.update_project);
+                    setTitle(R.string.edit_project_title);
+                }
+            }
+        }
+
         saveButton = findViewById(R.id.buttonSaveProject);
 
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Implement save logic, e.g., save to ViewModel or return result to main activity
+                // Implement save logic, e.g., save to ViewModel or return result to main
+                // activity
                 saveProject();
             }
         });
 
         Button testButton = this.findViewById(R.id.testButton);
-        //testButton.setVisibility(View.VISIBLE);
+        // testButton.setVisibility(View.VISIBLE);
         testButton.setOnClickListener(
                 v -> {
                     openFolderPicker(REQUEST_CODE_OPEN_TEST_DIRECTORY);
-                }
-        );
+                });
     }
-
 
     public void openFolderPicker(int requestCode) {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
@@ -83,7 +106,8 @@ public class EditProjectActivity extends AppCompatActivity {
                 // storeFolderUri(folderUri);
                 // folderUrl = folderUri;
 
-                // new MainActivity.CloneRepoTask(this, gitService, fileStorageService).execute();
+                // new MainActivity.CloneRepoTask(this, gitService,
+                // fileStorageService).execute();
                 if (checkIfDirectoryIsEmpty(folderUri)) {
                     showAlertDialog();
                 } else {
@@ -121,7 +145,6 @@ public class EditProjectActivity extends AppCompatActivity {
         }
     }
 
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -132,11 +155,14 @@ public class EditProjectActivity extends AppCompatActivity {
         String uName = userNameEditor.getText().toString();
         String pwd = passwordEditor.getText().toString();
 
-        ProjectModel newProject = new ProjectModel(rUrl, uName, pwd, uri);
-        viewModel.addProject(getApplicationContext(), newProject);
+        ProjectModel project = new ProjectModel(rUrl, uName, pwd, uri);
+        // Add new project
+        viewModel.addProject(getApplicationContext(), project);
 
+        // Start the service for new projects
         Intent startIntent = new Intent(this, ProjectService.class);
         startService(startIntent);
+
 
         finish();
     }
@@ -159,6 +185,24 @@ public class EditProjectActivity extends AppCompatActivity {
     }
 
     private void saveProject() {
-        openFolderPicker(REQUEST_CODE_OPEN_DIRECTORY);
+        if (editPosition != -1) {
+            // Update existing project
+            List<ProjectModel> currentProjects = new ArrayList<>(viewModel.getProjects().getValue());
+            if (editPosition < currentProjects.size()) {
+                String rUrl = repoUrlEditor.getText().toString();
+                String uName = userNameEditor.getText().toString();
+                String pwd = passwordEditor.getText().toString();
+                ProjectModel project = new ProjectModel(rUrl, uName, pwd, currentProjects.get(editPosition).getFolderUri());
+                project.folderName = currentProjects.get(editPosition).getFolderName();
+                project.status = currentProjects.get(editPosition).getStatus();
+                //currentProjects.set(editPosition, project);
+                viewModel.setProject(project, editPosition, getApplicationContext());
+                viewModel.saveProjects(getApplicationContext());
+                viewModel.updateProjects();
+            }
+            finish();
+        } else {
+            openFolderPicker(REQUEST_CODE_OPEN_DIRECTORY);
+        }
     }
 }
