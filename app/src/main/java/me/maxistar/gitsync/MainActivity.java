@@ -121,10 +121,17 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
             viewModel.syncProject(getApplicationContext(), item.getGroupId()); // groupId used as the position
             Intent startIntent = new Intent(this, ProjectService.class);
             startService(startIntent);
+            return true;
+        }
+        if (item.getItemId() == 2) { // Edit action
+            editProjectById(item.getGroupId());
+            return true;
         }
         return false;
     }
 
+    private void editProjectById(int position) {
+    }
 
 
     @Override

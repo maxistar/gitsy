@@ -110,6 +110,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
         public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
             menu.add(this.getAdapterPosition(), 0, 0, "Delete");
             menu.add(this.getAdapterPosition(), 1, 1, "Synchronize");
+            menu.add(this.getAdapterPosition(), 2, 2, "Edit");
         }
 
     }
