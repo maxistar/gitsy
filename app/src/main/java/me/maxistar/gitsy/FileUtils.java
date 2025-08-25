@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -22,7 +22,7 @@ import java.lang.reflect.Type;
 
 public class FileUtils {
 
-    public static final String TAG = "GitSyncDebug";
+    public static final String TAG = "GitSyDebug";
 
     public static List<SAFFileInfo> listFilesInFolder(Context context, Uri folderUri) {
         List<SAFFileInfo> fileInfos = new ArrayList<>();

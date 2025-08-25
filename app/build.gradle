@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'me.maxistar.gitsync'
-    compileSdk 34
+    namespace 'me.maxistar.gitsy'
+    compileSdk 35
 
     defaultConfig {
-        applicationId "me.maxistar.gitsync"
+        applicationId "me.maxistar.gitsy"
         minSdk 24
         versionCode 1
         versionName "0.0.1"

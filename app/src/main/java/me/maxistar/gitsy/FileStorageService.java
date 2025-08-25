@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import android.content.Context;
 import android.net.Uri;
@@ -21,7 +21,7 @@ public class FileStorageService {
 
     private static FileStorageService instance;
 
-    public static final String TAG = "GitSyncDebug";
+    public static final String TAG = "GitSyDebug";
     public static final int BUFFER_SIZE = 1024;
 
     private FileRegistry localRegistry;

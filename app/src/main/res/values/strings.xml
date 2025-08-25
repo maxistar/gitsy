@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Git Sync</string>
+    <string name="app_name">GitSy</string>
     <string name="About">About</string>
     <string name="CloneRepo">Clone Repo</string>
     <string name="ResetRepo">Reset Repo</string>

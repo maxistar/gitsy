@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import android.util.Log;
 
@@ -12,7 +12,7 @@ import java.io.IOException;
 
 public class FileRegistry {
 
-    public static final String TAG = "GitSyncDebug";
+    public static final String TAG = "GitSyDebug";
 
     FileInfoEntry rootEntry = new FileInfoEntry("", FileInfoEntry.NODE_FOLDER);
 

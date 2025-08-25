@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 public class ServiceLocator {
     private static ServiceLocator instance = null;

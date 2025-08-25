@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;

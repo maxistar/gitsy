@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import android.content.Context;
 import android.os.PowerManager;

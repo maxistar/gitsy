@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
 
         // Set app info text with the version
         TextView appInfo = dialogView.findViewById(R.id.app_info);
-        appInfo.setText("Android GitSync\nVersion " + versionName);
+        appInfo.setText("Android GitSy\nVersion " + versionName);
 
         // Create and show the dialog
         AlertDialog aboutDialog = new AlertDialog.Builder(this)

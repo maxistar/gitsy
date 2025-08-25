@@ -1,14 +1,5 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
-import android.util.Log;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.TreeMap;
 
 public class FileInfoEntry {

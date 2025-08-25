@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -12,7 +12,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.widget.Toast;
 
-import java.io.File;
 import java.util.List;
 
 public class ProjectService extends Service {

@@ -1,8 +1,4 @@
-package me.maxistar.gitsync;
-
-import android.net.Uri;
-
-import java.util.Date;
+package me.maxistar.gitsy;
 
 public class ProjectModel {
 

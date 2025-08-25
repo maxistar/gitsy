@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 

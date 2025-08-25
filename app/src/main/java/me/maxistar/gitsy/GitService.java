@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import android.content.Context;
 import android.util.Log;
@@ -13,7 +13,7 @@ import java.io.IOException;
 
 public class GitService {
 
-    public static final String TAG = "GitSyncDebug";
+    public static final String TAG = "GitSyDebug";
 
     public void cloneRepository(Context context, String internalFolderName, String repoUrl, String gitRemoteUser, String gitRemotePassword) throws GitAPIException {
         Log.d(TAG, "Start Clone Repo");

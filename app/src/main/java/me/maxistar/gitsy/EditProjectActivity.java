@@ -1,4 +1,4 @@
-package me.maxistar.gitsync;
+package me.maxistar.gitsy;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -20,7 +20,7 @@ import java.util.List;
 
 public class EditProjectActivity extends AppCompatActivity {
 
-    public static final String TAG = "GitSyncDebug";
+    public static final String TAG = "GitSyDebug";
     EditText repoUrlEditor;
 
     EditText userNameEditor;
