@@ -30,6 +30,8 @@ public class ProjectModel {
 
     int numberFiles;
 
+    int status = STATUS_TO_CLONE;
+
     public long getLastSync() {
         return lastSync;
     }
@@ -37,8 +39,6 @@ public class ProjectModel {
     public void setLastSync(long lastSync) {
         this.lastSync = lastSync;
     }
-
-    int status = STATUS_TO_CLONE;
 
     public ProjectModel(String repoUrl, String userName, String password, String folderUri) {
         this.folderName = generateFolderName();

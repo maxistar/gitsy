@@ -7,6 +7,8 @@ public class ServiceLocator {
 
     private WakeLockService wakeLockService = null;
 
+    private ValueEncryptor valueEncryptor = null;
+
     public static ServiceLocator getInstance() {
         if (instance == null) {
             synchronized(ServiceLocator.class) {
@@ -21,5 +23,13 @@ public class ServiceLocator {
             wakeLockService = new WakeLockService();
         }
         return wakeLockService;
+    }
+
+    public ValueEncryptor getValueEncryptor() throws Exception {
+        if (valueEncryptor == null) {
+            valueEncryptor = new ValueEncryptor();
+            valueEncryptor.ensureKey();
+        }
+        return valueEncryptor;
     }
 }

@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -73,6 +74,17 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
             }
         });
 
+
+
+        // try {
+        //     ValueEncryptor ecryptor = new ValueEncryptor();
+        //     ecryptor.ensureKey();
+        //     String encrypted = ecryptor.encryptValue("sometext", "random");
+        //     String decrypted = ecryptor.decryptValue(encrypted, "random");
+        //     Log.w("dddfdfdfd", decrypted);
+        // } catch (Exception e) {
+        //     e.printStackTrace();
+        // }
 
 
         // if need to sync - sync it!

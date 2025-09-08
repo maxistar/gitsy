@@ -104,7 +104,11 @@ public class FileUtils {
 
         File outputFile = new File(context.getFilesDir(), "projects.json");
 
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(ProjectModel.class, new ProjectJsonAdapter())
+                .setPrettyPrinting()
+                .create();
+
         try (FileWriter writer = new FileWriter(outputFile)) {
             gson.toJson(projects, writer);
             Log.w(TAG, "Registry saved to: " + outputFile.getAbsolutePath());
@@ -112,35 +116,20 @@ public class FileUtils {
             e.printStackTrace();
             Log.w(TAG, "Failed to save registry.");
         }
-
-        /*Gson gson = new Gson();
-        Type listType = new TypeToken<List<ProjectModel>>() {}.getType();
-        String json = gson.toJson(projects, listType);
-
-        FileOutputStream outputStream = null;
-        try {
-            outputStream = context.openFileOutput("projects.json", Context.MODE_PRIVATE);
-            outputStream.write(json.getBytes());
-            outputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }*/
     }
 
     public static ArrayList<ProjectModel> loadProjects(Context context) {
         File inputFile = new File(context.getFilesDir(), "projects.json");
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(ProjectModel.class, new ProjectJsonAdapter())
+                .create();
         try (FileReader reader = new FileReader(inputFile)) {
             Type listType = new TypeToken<ArrayList<ProjectModel>>() {}.getType();
             ArrayList<ProjectModel> result = gson.fromJson(reader, listType);
+            //Log.i("GSON", result.toString());
+            if (result == null) {
+                return new ArrayList<>();
+            }
             return result;
         } catch (Exception e) {
             e.printStackTrace();
