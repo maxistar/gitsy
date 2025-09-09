@@ -180,6 +180,7 @@ public class ProjectService extends Service {
 
             project.setStatus(ProjectModel.STATUS_READY);
             project.setNumberFiles(totalFiles);
+            project.setLastSync(System.currentTimeMillis());
             EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
         } catch (Exception e) {
             project.setStatus(ProjectModel.STATUS_CLONING_ERROR);
