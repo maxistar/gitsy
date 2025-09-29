@@ -38,7 +38,7 @@ public class ProjectService extends Service {
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel("service_channel",
-                    "Foreground Service Channel",
+                    getString(R.string.foreground_service_channel),
                     NotificationManager.IMPORTANCE_DEFAULT);
             notificationManager.createNotificationChannel(channel);
         }
@@ -47,7 +47,7 @@ public class ProjectService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Toast.makeText(getApplicationContext(), "Service Started", Toast.LENGTH_LONG).show();
-        startForeground(NOTIFICATION_ID, getNotification("Starting Service..."));
+        startForeground(NOTIFICATION_ID, getNotification(getString(R.string.starting_service)));
         ServiceLocator.getInstance().getWakeLockService().acquireLock(getApplicationContext());
         // Perform long-running task in a background thread and update notification text
         performTaskAndUpdateNotification();
@@ -57,7 +57,7 @@ public class ProjectService extends Service {
     private Notification getNotification(String text) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationBuilder = new Notification.Builder(this, "service_channel")
-                    .setContentTitle("Foreground Service")
+                    .setContentTitle(getString(R.string.foreground_service_title))
                     .setContentText(text)
                     .setSmallIcon(R.drawable.ic_launcher_foreground)
                     .setOngoing(true);

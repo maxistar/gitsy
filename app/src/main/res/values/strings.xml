@@ -11,6 +11,9 @@
     <string name="repository_url">Repository URL</string>
     <string name="username">username</string>
     <string name="password">password</string>
+    <string name="foreground_service_title">GitSy Sync Service</string>
+    <string name="starting_service">Starting Service...</string>
+    <string name="foreground_service_channel">GitSy Sync Channel</string>
 
     <string name="update_project">Update Project</string>
     <string name="delete_project_title">Delete Project</string>
@@ -19,9 +22,9 @@
     <string name="visit_our_website_gitsy_de">Visit our Website: gitsy.de</string>
     <string name="create_first_project">Create your first project</string>
     
-    <string name="form_explanation">Please specify username/password and repository URL.*</string>
-    <string name="https_note">1. At the moment only HTTPS git urls are supported. Follow the guide of how to create gitlab/github repository accessed with username/passowrd. Read more.</string>
-    <string name="token_note">2. Please note gitlab/github doe not use username passwords. Please use access tokens instead. Read more.</string>
+    <string name="form_explanation">Please specify username/password* and repository URL.**</string>
+    <string name="token_note">* Please note gitlab/github does not use username passwords. Please use access tokens instead.</string>
+    <string name="https_note">** At the moment only HTTPS git urls are supported. Follow the guide of how to create gitlab/github repository accessed with username/password.</string>
 
     <string name="application_was_stopped">Application was stopped</string>
     <string name="application_was_stopped_message">Looks like application was stopped during synchronization process, this could cause unexpected results, please keep application open during synchronization!</string>

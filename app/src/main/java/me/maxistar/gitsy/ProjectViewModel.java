@@ -95,7 +95,10 @@ public class ProjectViewModel extends ViewModel {
     public boolean allElementsAreReady() {
         List<ProjectModel> currentProjects = repository.getProjects();
         for (ProjectModel model : currentProjects) {
-            if (model.getStatus() == ProjectModel.STATUS_TO_SYNC || model.getStatus() == ProjectModel.STATUS_SYNC_IN_PROGRESS) {
+            if (model.getStatus() == ProjectModel.STATUS_TO_SYNC ||
+                    model.getStatus() == ProjectModel.STATUS_SYNC_IN_PROGRESS ||
+                    model.getStatus() == ProjectModel.STATUS_CLONING ||
+                    model.getStatus() == ProjectModel.STATUS_TO_CLONE) {
                 return false;
             }
         }
@@ -110,7 +113,7 @@ public class ProjectViewModel extends ViewModel {
         List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
 
         for (ProjectModel model : currentProjects) {
-                model.setStatus(ProjectModel.STATUS_READY);
+            model.setStatus(ProjectModel.STATUS_READY);
         }
         repository.saveProjects(applicationContext);
         projects.setValue(repository.getProjects());
