@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -46,6 +47,13 @@ public class EditProjectActivity extends AppCompatActivity {
         userNameEditor = this.findViewById(R.id.userNameEditor);
         passwordEditor = this.findViewById(R.id.passwordEditor);
         saveButton = findViewById(R.id.buttonSaveProject);
+
+        // Set up the Read More link
+        TextView readMoreLink = findViewById(R.id.readMoreLink);
+        readMoreLink.setOnClickListener(v -> {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.documentation_url)));
+            startActivity(browserIntent);
+        });
 
         viewModel = new ViewModelProvider(this).get(ProjectViewModel.class);
 

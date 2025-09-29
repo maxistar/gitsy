@@ -12,8 +12,10 @@
     <string name="username">username</string>
     <string name="password">password</string>
     <string name="foreground_service_title">GitSy Sync Service</string>
-    <string name="starting_service">Starting Service...</string>
+    <string name="starting_service">Starting Service…</string>
     <string name="foreground_service_channel">GitSy Sync Channel</string>
+    <string name="read_more">Read more on the website…</string>
+    <string name="documentation_url">https://gitsy.de/documentation/</string>
 
     <string name="update_project">Update Project</string>
     <string name="delete_project_title">Delete Project</string>
