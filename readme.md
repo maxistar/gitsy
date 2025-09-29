@@ -15,6 +15,19 @@
 
 `./gradlew test`
 
+
+## Deployment
+
+### Manual Deployment
+
+- update version in [build.gradle](app/build.gradle)
+- use menu item "Build" -> "Generate Signed App Bundle of Apk"
+
+### Automatic deployment
+
+@TODO
+
+
 ## Todo
 
 - when synchronization is not possible make sure no data lost
