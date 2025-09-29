@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -43,6 +45,7 @@ public class EditProjectActivity extends AppCompatActivity {
         repoUrlEditor = this.findViewById(R.id.repoUrlEditor);
         userNameEditor = this.findViewById(R.id.userNameEditor);
         passwordEditor = this.findViewById(R.id.passwordEditor);
+        saveButton = findViewById(R.id.buttonSaveProject);
 
         viewModel = new ViewModelProvider(this).get(ProjectViewModel.class);
 
@@ -58,14 +61,36 @@ public class EditProjectActivity extends AppCompatActivity {
                     userNameEditor.setText(project.getUserName());
                     passwordEditor.setText(project.getPassword());
                     // Update the button text to indicate we're editing
-                    saveButton = findViewById(R.id.buttonSaveProject);
                     saveButton.setText(R.string.update_project);
                     setTitle(R.string.edit_project_title);
                 }
             }
         }
 
-        saveButton = findViewById(R.id.buttonSaveProject);
+        // Add text change listeners to validate input fields
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Not needed
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Not needed
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                validateFields();
+            }
+        };
+
+        repoUrlEditor.addTextChangedListener(textWatcher);
+        userNameEditor.addTextChangedListener(textWatcher);
+        passwordEditor.addTextChangedListener(textWatcher);
+
+        // Initial validation
+        validateFields();
 
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -82,6 +107,18 @@ public class EditProjectActivity extends AppCompatActivity {
                 v -> {
                     openFolderPicker(REQUEST_CODE_OPEN_TEST_DIRECTORY);
                 });
+    }
+
+    /**
+     * Validates input fields and updates the save button state
+     */
+    private void validateFields() {
+        String repoUrl = repoUrlEditor.getText().toString().trim();
+        String userName = userNameEditor.getText().toString().trim();
+        String password = passwordEditor.getText().toString().trim();
+
+        boolean isValid = !repoUrl.isEmpty() && !userName.isEmpty() && !password.isEmpty();
+        saveButton.setEnabled(isValid);
     }
 
     public void openFolderPicker(int requestCode) {

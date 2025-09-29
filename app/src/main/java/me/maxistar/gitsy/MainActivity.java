@@ -18,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.lifecycle.ViewModelProvider;
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     private ProjectViewModel viewModel;
     private RecyclerView recyclerView;
     private ProjectAdapter adapter;
+    private View emptyView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +43,11 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         setContentView(R.layout.activity_main);
 
         recyclerView = findViewById(R.id.recyclerView);
+        emptyView = findViewById(R.id.empty_view);
+        Button addProjectButton = findViewById(R.id.btn_add_project);
+        
+        addProjectButton.setOnClickListener(v -> addRepository());
+        
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL);
         recyclerView.addItemDecoration(dividerItemDecoration);
@@ -53,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         viewModel = new ViewModelProvider(this).get(ProjectViewModel.class);
         viewModel.getProjects().observe(this, projects -> {
             adapter.setProjects(projects);
+            checkIfEmpty(projects.size());
         });
         viewModel.loadProjects(getApplicationContext());
         registerForContextMenu(recyclerView);
@@ -97,6 +105,16 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         super.onResume();
         viewModel.updateProjects();
         adapter.notifyDataSetChanged();
+    }
+
+    private void checkIfEmpty(int size) {
+        if (size == 0) {
+            recyclerView.setVisibility(View.GONE);
+            emptyView.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            emptyView.setVisibility(View.GONE);
+        }
     }
 
     private void deleteProjectById(int groupId) {

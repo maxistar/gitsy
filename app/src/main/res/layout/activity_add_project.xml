@@ -7,11 +7,18 @@
     android:padding="16dp"
     tools:context=".EditProjectActivity">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/form_explanation"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
     <EditText
         android:id="@+id/repoUrlEditor"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Repository URL"
+        android:hint="@string/repository_url"
         android:text=""
         />
 
@@ -20,7 +27,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:hint="username" />
+        android:hint="@string/username" />
 
     <EditText
         android:id="@+id/passwordEditor"
@@ -28,13 +35,25 @@
         android:layout_height="wrap_content"
         android:text=""
         android:inputType="textPassword"
-        android:hint="password" />
+        android:hint="@string/password" />
 
     <Button
         android:id="@+id/buttonSaveProject"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save Project" />
+        android:text="@string/select_project_folder" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/https_note"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/token_note" />
 
     <Button
         android:id="@+id/testButton"
@@ -43,8 +62,5 @@
         android:text="Create Test Folder"
         android:visibility="gone"
         />
-
-
-
 
 </LinearLayout>
