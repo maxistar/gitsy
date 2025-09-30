@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">GitSy</string>
+    <string name="About">Informazioni</string>
+    <string name="CloneRepo">Clona repository</string>
+    <string name="ResetRepo">Reimposta repository</string>
+    <string name="SyncRepo">Sincronizza repository</string>
+    <string name="AddRepo">Aggiungi repository</string>
+    <string name="SyncAll">Sincronizza tutto</string>
+    <string name="edit_project_title">Modifica progetto</string>
+    <string name="select_project_folder">Seleziona cartella del progetto</string>
+    <string name="repository_url">URL del repository</string>
+    <string name="username">nome utente</string>
+    <string name="password">password</string>
+    <string name="foreground_service_title">Servizio di sincronizzazione GitSy</string>
+    <string name="starting_service">Avvio del servizio…</string>
+    <string name="foreground_service_channel">Canale di sincronizzazione GitSy</string>
+    <string name="read_more">Leggi di più sul sito…</string>
+    <string name="documentation_url">https://gitsy.de/documentation/</string>
+
+    <string name="update_project">Aggiorna progetto</string>
+    <string name="delete_project_title">Elimina progetto</string>
+    <string name="delete_project_message">Sei sicuro di voler eliminare questo progetto?</string>
+    <string name="terms_and_conditions">Termini e condizioni</string>
+    <string name="visit_our_website_gitsy_de">Visita il nostro sito: gitsy.de</string>
+    <string name="create_first_project">Crea il tuo primo progetto</string>
+
+    <string name="form_explanation">Specifica nome utente/password* e URL del repository.**</string>
+    <string name="token_note">* Nota che GitLab/GitHub non usano combinazioni nome utente e password. Usa invece i token di accesso.</string>
+    <string name="https_note">** Al momento sono supportati solo URL HTTPS dei repository. Segui la guida su come creare un repository GitLab/GitHub accessibile con nome utente/password.</string>
+
+    <string name="application_was_stopped">L\'applicazione è stata arrestata</string>
+    <string name="application_was_stopped_message">Sembra che l\'applicazione sia stata arrestata durante la sincronizzazione. Questo potrebbe causare risultati imprevisti, tieni l\'applicazione aperta durante la sincronizzazione!</string>
+</resources>

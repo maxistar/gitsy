@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">GitSy</string>
+    <string name="About">О приложении</string>
+    <string name="CloneRepo">Клонировать репозиторий</string>
+    <string name="ResetRepo">Сбросить репозиторий</string>
+    <string name="SyncRepo">Синхронизировать репозиторий</string>
+    <string name="AddRepo">Добавить репозиторий</string>
+    <string name="SyncAll">Синхронизировать все</string>
+    <string name="edit_project_title">Редактировать проект</string>
+    <string name="select_project_folder">Выберите папку проекта</string>
+    <string name="repository_url">URL-адрес репозитория</string>
+    <string name="username">имя пользователя</string>
+    <string name="password">пароль</string>
+    <string name="foreground_service_title">Служба синхронизации GitSy</string>
+    <string name="starting_service">Запуск службы…</string>
+    <string name="foreground_service_channel">Канал синхронизации GitSy</string>
+    <string name="read_more">Подробнее на сайте…</string>
+    <string name="documentation_url">https://gitsy.de/documentation/</string>
+
+    <string name="update_project">Обновить проект</string>
+    <string name="delete_project_title">Удалить проект</string>
+    <string name="delete_project_message">Вы уверены, что хотите удалить этот проект?</string>
+    <string name="terms_and_conditions">Условия использования</string>
+    <string name="visit_our_website_gitsy_de">Посетите наш сайт: gitsy.de</string>
+    <string name="create_first_project">Создайте свой первый проект</string>
+
+    <string name="form_explanation">Укажите имя пользователя/пароль* и URL репозитория.**</string>
+    <string name="token_note">* Обратите внимание, что GitLab/GitHub не используют пары имя пользователя и пароль. Используйте токены доступа.</string>
+    <string name="https_note">** В данный момент поддерживаются только HTTPS-адреса репозиториев. Следуйте инструкции по созданию репозитория GitLab/GitHub с доступом по имени пользователя/паролю.</string>
+
+    <string name="application_was_stopped">Приложение было остановлено</string>
+    <string name="application_was_stopped_message">Похоже, приложение было остановлено во время синхронизации. Это может привести к непредвиденным результатам, пожалуйста, держите приложение открытым во время синхронизации!</string>
+</resources>

@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">GitSy</string>
+    <string name="About">Über</string>
+    <string name="CloneRepo">Repository klonen</string>
+    <string name="ResetRepo">Repository zurücksetzen</string>
+    <string name="SyncRepo">Repository synchronisieren</string>
+    <string name="AddRepo">Repository hinzufügen</string>
+    <string name="SyncAll">Alle synchronisieren</string>
+    <string name="edit_project_title">Projekt bearbeiten</string>
+    <string name="select_project_folder">Projektordner auswählen</string>
+    <string name="repository_url">Repository-URL</string>
+    <string name="username">Benutzername</string>
+    <string name="password">Passwort</string>
+    <string name="foreground_service_title">GitSy-Synchronisierungsdienst</string>
+    <string name="starting_service">Dienst wird gestartet…</string>
+    <string name="foreground_service_channel">GitSy-Synchronisierungskanal</string>
+    <string name="read_more">Mehr auf der Website lesen…</string>
+    <string name="documentation_url">https://gitsy.de/documentation/</string>
+
+    <string name="update_project">Projekt aktualisieren</string>
+    <string name="delete_project_title">Projekt löschen</string>
+    <string name="delete_project_message">Sind Sie sicher, dass Sie dieses Projekt löschen möchten?</string>
+    <string name="terms_and_conditions">Allgemeine Geschäftsbedingungen</string>
+    <string name="visit_our_website_gitsy_de">Besuchen Sie unsere Website: gitsy.de</string>
+    <string name="create_first_project">Erstellen Sie Ihr erstes Projekt</string>
+
+    <string name="form_explanation">Bitte geben Sie Benutzername/Passwort* und die Repository-URL an.**</string>
+    <string name="token_note">* Beachten Sie, dass GitLab/GitHub keine Kombination aus Benutzername und Passwort verwenden. Nutzen Sie stattdessen Zugriffstoken.</string>
+    <string name="https_note">** Momentan werden nur HTTPS-Repository-URLs unterstützt. Folgen Sie der Anleitung zum Erstellen eines GitLab/GitHub-Repositorys mit Zugriff per Benutzername/Passwort.</string>
+
+    <string name="application_was_stopped">Anwendung wurde gestoppt</string>
+    <string name="application_was_stopped_message">Anscheinend wurde die Anwendung während des Synchronisierungsvorgangs beendet. Dies kann zu unerwarteten Ergebnissen führen. Bitte lassen Sie die Anwendung während der Synchronisierung geöffnet!</string>
+</resources>
