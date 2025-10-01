@@ -22,7 +22,7 @@
     <string name="delete_project_message">Sind Sie sicher, dass Sie dieses Projekt löschen möchten?</string>
     <string name="terms_and_conditions">Allgemeine Geschäftsbedingungen</string>
     <string name="visit_our_website_gitsy_de">Besuchen Sie unsere Website: gitsy.de</string>
-    <string name="create_first_project">Erstellen Sie Ihr erstes Projekt</string>
+    <string name="create_first_project">Ihr erstes Projekt klonen</string>
 
     <string name="form_explanation">Bitte geben Sie Benutzername/Passwort* und die Repository-URL an.**</string>
     <string name="token_note">* Beachten Sie, dass GitLab/GitHub keine Kombination aus Benutzername und Passwort verwenden. Nutzen Sie stattdessen Zugriffstoken.</string>
