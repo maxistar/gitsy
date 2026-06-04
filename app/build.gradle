@@ -2,6 +2,23 @@ plugins {
     id 'com.android.application'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+
+def releaseProperty = { String name ->
+    def value = project.findProperty(name) ?: localProperties.getProperty(name)
+    value?.toString()?.trim()
+}
+
+def releaseStoreFile = releaseProperty('RELEASE_STORE_FILE')
+def releaseStorePassword = releaseProperty('RELEASE_STORE_PASSWORD')
+def releaseKeyAlias = releaseProperty('RELEASE_KEY_ALIAS')
+def releaseKeyPassword = releaseProperty('RELEASE_KEY_PASSWORD')
+def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
 android {
     namespace 'me.maxistar.gitsy'
     compileSdk 36
@@ -16,8 +33,22 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

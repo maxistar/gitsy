@@ -1,17 +1,69 @@
-image: maxistar/android:latest
-
 stages:
-  - build
+  - validate
+  - release
 
+variables:
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  ANDROID_SDK_ROOT: "$CI_PROJECT_DIR/android-sdk"
+  ANDROID_HOME: "$CI_PROJECT_DIR/android-sdk"
+  DEBIAN_FRONTEND: "noninteractive"
+  RELEASE_STAGE_DIR: "$CI_PROJECT_DIR/release-dist"
 
-build:
-  stage: build
+cache:
+  key: "$CI_JOB_NAME"
+  paths:
+    - .gradle/caches/
+    - .gradle/wrapper/
+    - android-sdk/
+
+default:
+  image: ubuntu:22.04
   tags:
-    - fomalgaut
-  script:
-    - echo "Building"
-    - gradle assembleDebug --no-daemon
-    - gradle compileDebugSources
-    - gradle compileDebugAndroidTestSources
-    - gradle assembleAndroidTest --no-daemon
+    - rigel
+  before_script:
+    - 'apt-get update'
+    - 'apt-get install -y openjdk-17-jdk wget unzip openssh-client'
+    - 'mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"'
+    - 'wget -q https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip -O /tmp/android-commandline-tools.zip'
+    - 'unzip -q /tmp/android-commandline-tools.zip -d /tmp/android-cmdline-tools'
+    - 'rm -rf "$ANDROID_SDK_ROOT/cmdline-tools/latest"'
+    - 'mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools/latest"'
+    - 'mv /tmp/android-cmdline-tools/cmdline-tools/* "$ANDROID_SDK_ROOT/cmdline-tools/latest/"'
+    - 'bash -lc ''set +o pipefail; yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null'''
+    - '"$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"'
 
+validate:
+  stage: validate
+  script:
+    - './gradlew assembleDebug'
+    - './gradlew compileDebugSources'
+    - './gradlew compileDebugAndroidTestSources'
+    - './gradlew assembleAndroidTest'
+
+release_upload:
+  stage: release
+  when: manual
+  script:
+    - 'test -n "$KEYSTORE_BASE64"'
+    - 'test -n "$RELEASE_STORE_PASSWORD"'
+    - 'test -n "$RELEASE_KEY_ALIAS"'
+    - 'test -n "$RELEASE_KEY_PASSWORD"'
+    - 'test -n "$SSH_PRIVATE_KEY"'
+    - 'test -n "$SSH_HOST"'
+    - 'test -n "$SSH_USER"'
+    - 'test -n "$APK_SSH_TARGET_DIR"'
+    - 'test -n "$AAB_SSH_TARGET_DIR"'
+    - 'mkdir -p "$HOME/.ssh"'
+    - 'printf "%s\n" "$SSH_PRIVATE_KEY" | tr -d "\r" > "$HOME/.ssh/id_ed25519"'
+    - 'chmod 600 "$HOME/.ssh/id_ed25519"'
+    - 'mkdir -p "$RELEASE_STAGE_DIR"'
+    - 'printf "%s" "$KEYSTORE_BASE64" | base64 --decode > "$CI_PROJECT_DIR/release-keystore.jks"'
+    - 'printf "sdk.dir=%s\nRELEASE_STORE_FILE=%s\nRELEASE_STORE_PASSWORD=%s\nRELEASE_KEY_ALIAS=%s\nRELEASE_KEY_PASSWORD=%s\n" "$ANDROID_SDK_ROOT" "$CI_PROJECT_DIR/release-keystore.jks" "$RELEASE_STORE_PASSWORD" "$RELEASE_KEY_ALIAS" "$RELEASE_KEY_PASSWORD" > "$CI_PROJECT_DIR/local.properties"'
+    - './gradlew assembleRelease bundleRelease'
+    - 'VERSION=$(grep ''versionName'' "$CI_PROJECT_DIR/app/build.gradle" | head -n1 | cut -d ''"'' -f2); test -n "$VERSION"'
+    - 'APK_SOURCE="$CI_PROJECT_DIR/app/build/outputs/apk/release/app-release.apk"; AAB_SOURCE="$CI_PROJECT_DIR/app/build/outputs/bundle/release/app-release.aab"; test -f "$APK_SOURCE"; test -f "$AAB_SOURCE"'
+    - 'cp "$APK_SOURCE" "$RELEASE_STAGE_DIR/gitsy-$VERSION.apk"'
+    - 'cp "$AAB_SOURCE" "$RELEASE_STAGE_DIR/gitsy-$VERSION.aab"'
+    - 'test -f "$RELEASE_STAGE_DIR/gitsy-$VERSION.apk"; test -f "$RELEASE_STAGE_DIR/gitsy-$VERSION.aab"'
+    - 'scp -P "${SSH_PORT:-22}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$RELEASE_STAGE_DIR/gitsy-$VERSION.apk" "$SSH_USER@$SSH_HOST:$APK_SSH_TARGET_DIR/"'
+    - 'scp -P "${SSH_PORT:-22}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$RELEASE_STAGE_DIR/gitsy-$VERSION.aab" "$SSH_USER@$SSH_HOST:$AAB_SSH_TARGET_DIR/"'
