@@ -19,7 +19,7 @@ cache:
 default:
   image: ubuntu:22.04
   tags:
-    - rigel
+    - crabby
   before_script:
     - 'apt-get update'
     - 'apt-get install -y openjdk-17-jdk wget unzip openssh-client'
