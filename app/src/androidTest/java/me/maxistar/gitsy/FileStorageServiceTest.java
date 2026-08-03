@@ -1,185 +1,157 @@
 package me.maxistar.gitsy;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import org.junit.Before;
-import org.junit.runner.RunWith;
-
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.provider.DocumentsContract;
 
+import androidx.documentfile.provider.DocumentFile;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
-import android.net.Uri;
-import androidx.documentfile.provider.DocumentFile;
-import org.junit.After;
+import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class FileStorageServiceTest {
-    public static final String SOURCE_DIR_NAME = "test-source";
+    private static final String SOURCE = "connected-test-source";
     private Context context;
-    private FileStorageService fileStorageService;
-    private File sourceDir;
-
+    private FileStorageService storage;
+    private Uri treeUri;
+    private Context testContext;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        fileStorageService = new FileStorageService();
-
-
-        // Set up source and destination directories
-        fileStorageService.deleteLocalDirectoryRecursively(context, SOURCE_DIR_NAME);
-        sourceDir = new File(context.getFilesDir(), SOURCE_DIR_NAME);
-        sourceDir.mkdirs();
-    }
-
-    public void createTestFile(File file, String content) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(content.getBytes());
-            System.out.println("File created: " + file.getAbsolutePath());
-        }
-    }
-
-    public void createTestFile(DocumentFile file, String content) throws IOException {
-        try (OutputStream fos = context.getContentResolver().openOutputStream(file.getUri())) {
-            if (fos != null) {
-                fos.write(content.getBytes());
-                System.out.println("File created: " + file.getUri());
-            } else {
-                System.out.println("Failed to create file: " + file.getName());
-            }
-        }
-    }
-
-    public String getFileContent(File file) throws IOException {
-        StringBuilder content = new StringBuilder();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
-            }
-        }
-
-        return content.toString().trim(); // Trim to remove the trailing newline
-    }
-
-    public String getFileContent(DocumentFile file) throws IOException {
-        StringBuilder content = new StringBuilder();
-
-        try (InputStream inputStream = context.getContentResolver().openInputStream(file.getUri());
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
-            }
-        }
-
-        return content.toString().trim(); // Trim to remove the trailing newline
+        testContext = InstrumentationRegistry.getInstrumentation().getContext();
+        storage = new FileStorageService();
+        treeUri = DocumentsContract.buildTreeDocumentUri(TestDocumentsProvider.AUTHORITY, TestDocumentsProvider.ROOT_ID);
+        grantTreeAccess(context.getPackageName());
+        grantTreeAccess(testContext.getPackageName());
+        storage.deleteLocalDirectoryRecursively(context, SOURCE);
+        clearDocuments();
+        assertTrue(localRoot().mkdirs() || localRoot().isDirectory());
     }
 
     @After
     public void tearDown() {
-        // Clean up test directories
-        deleteDirectoryRecursivelyAndSaveRegistry(sourceDir);
-
-        Uri safUri = getTestSafDirectoryUri();
-        DocumentFile pickedDir = DocumentFile.fromTreeUri(context, safUri);
-        deleteDirectoryContent(pickedDir);
-    }
-
-    private void deleteDirectoryContent(DocumentFile directory) {
-        if (directory != null && directory.isDirectory()) {
-            for (DocumentFile file : directory.listFiles()) {
-                // Recursively delete files and subdirectories
-                if (!deleteDirectoryRecursivelyAndSaveRegistry(file)) {
-                    return; // Stop if any deletion fails
-                }
-            }
-        }
-    }
-
-    private boolean deleteDirectoryRecursivelyAndSaveRegistry(DocumentFile directory) {
-        if (directory != null && directory.isDirectory()) {
-            for (DocumentFile file : directory.listFiles()) {
-                // Recursively delete files and subdirectories
-                if (!deleteDirectoryRecursivelyAndSaveRegistry(file)) {
-                    return false; // Stop if any deletion fails
-                }
-            }
-        }
-
-        // Delete the file or empty directory
-        return directory != null && directory.delete();
-    }
-
-    private void deleteDirectoryRecursivelyAndSaveRegistry(File directory) {
-        if (directory != null && directory.isDirectory()) {
-            for (File file : directory.listFiles()) {
-                deleteDirectoryRecursivelyAndSaveRegistry(file);
-            }
-        }
-        if (directory != null) {
-            directory.delete();
-        }
+        storage.deleteLocalDirectoryRecursively(context, SOURCE);
+        clearDocuments();
+        testContext.revokeUriPermission(
+                treeUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
     }
 
     @Test
-    public void testCopyToSaf() throws IOException {
-        Uri safUri = getTestSafDirectoryUri();
-
-        createTestFile(new File(sourceDir, "file1.txt"), "some contents");
-        createTestFile(new File(sourceDir, "file2.txt"), "some contents");
-        File folder = new File(sourceDir, "folder");
-        folder.mkdir();
-        createTestFile(new File(folder, "file2.txt"), "some contents");
-        System.out.println("Created 2 files");
-
-        // Move files to SAF directory
-        fileStorageService.copyToSaf(context, SOURCE_DIR_NAME, safUri);
-
-        // Verify that files were moved
-        DocumentFile safDirectory = DocumentFile.fromTreeUri(context, safUri);
-        assert safDirectory != null;
-        assert safDirectory.listFiles().length == 3; // Ensure all files moved
+    public void controlledProviderSupportsDocumentLifecycleAndUnicode() throws Exception {
+        DocumentFile root = requireRoot();
+        DocumentFile directory = root.createDirectory("вложенная папка");
+        assertNotNull(directory);
+        DocumentFile file = directory.createFile("text/plain", "заметка с пробелом.md");
+        assertNotNull(file);
+        write(file, "first");
+        assertEquals("first", read(file));
+        write(file, "replacement");
+        assertEquals("replacement", read(file));
+        assertTrue(file.delete());
+        assertNull(directory.findFile("заметка с пробелом.md"));
     }
 
     @Test
-    public void testCopyFromSaf() throws IOException {
-        Uri safUri = getTestSafDirectoryUri();
+    public void copyToSafAndBackUsesOwnedFixture() throws Exception {
+        writeLocal("note.md", "top level");
+        writeLocal("nested/empty.md", "");
+        writeLocal("nested/заметка.md", "unicode");
 
-        DocumentFile pickedDir = DocumentFile.fromTreeUri(context, safUri);
+        assertEquals(3, storage.copyToSaf(context, SOURCE, treeUri));
+        DocumentFile root = requireRoot();
+        assertNotNull(root.findFile("note.md"));
+        assertNotNull(root.findFile("nested"));
 
-        createTestFileInFolder(pickedDir, "filename1", "some file content 1");
-        createTestFileInFolder(pickedDir, "filename2", "some file content 2");
-
-        DocumentFile subDir = pickedDir.createDirectory("folder");
-        createTestFileInFolder(subDir, "filename3", "some file content 3");
-
-        System.out.println("Created 2 files");
-
-        fileStorageService.copyFromSaf(context, safUri, SOURCE_DIR_NAME);
-
-        assert sourceDir.listFiles().length == 3; // Ensure all files moved
+        storage.deleteLocalDirectoryRecursively(context, SOURCE);
+        assertTrue(localRoot().mkdirs());
+        storage.copyFromSaf(context, treeUri, SOURCE);
+        assertEquals("top level", readLocal("note.md"));
+        assertEquals("unicode", readLocal("nested/заметка.md"));
+        assertEquals("", readLocal("nested/empty.md"));
     }
 
-    private void createTestFileInFolder(DocumentFile pickedDir, String filename, String someFileContent) throws IOException {
-        DocumentFile newFile = pickedDir.createFile("application/octet-stream", filename);
-        createTestFile(newFile, someFileContent);
+    @Test
+    public void unavailableProviderFailsWithoutTouchingOwnedFixture() throws Exception {
+        writeLocal("preserved.md", "preserved");
+        Uri unavailable = DocumentsContract.buildTreeDocumentUri("me.maxistar.gitsync.missing.documents", "root");
+        try {
+            storage.copyFromSaf(context, unavailable, SOURCE);
+            fail("Expected unavailable provider to fail");
+        } catch (RuntimeException expected) {
+            assertEquals("preserved", readLocal("preserved.md"));
+            assertEquals(0, requireRoot().listFiles().length);
+        }
     }
 
-    private Uri getTestSafDirectoryUri() {
-        return Uri.parse("content://com.android.externalstorage.documents/tree/0CFA-3314%3ADocuments%2FTest03");
+    private DocumentFile requireRoot() {
+        DocumentFile root = DocumentFile.fromTreeUri(context, treeUri);
+        assertNotNull(root);
+        assertTrue(root.exists());
+        return root;
+    }
+
+    private void grantTreeAccess(String packageName) {
+        testContext.grantUriPermission(
+                packageName,
+                treeUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+    }
+
+    private void clearDocuments() {
+        DocumentFile root = DocumentFile.fromTreeUri(context, treeUri);
+        if (root == null || !root.exists()) return;
+        for (DocumentFile child : root.listFiles()) assertTrue("Could not delete " + child.getName(), child.delete());
+    }
+
+    private File localRoot() {
+        return new File(context.getFilesDir(), SOURCE);
+    }
+
+    private void writeLocal(String relativePath, String contents) throws Exception {
+        File file = new File(localRoot(), relativePath);
+        File parent = file.getParentFile();
+        assertNotNull(parent);
+        assertTrue(parent.mkdirs() || parent.isDirectory());
+        try (FileOutputStream output = new FileOutputStream(file)) {
+            output.write(contents.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    private String readLocal(String relativePath) throws Exception {
+        return new String(java.nio.file.Files.readAllBytes(new File(localRoot(), relativePath).toPath()), StandardCharsets.UTF_8);
+    }
+
+    private void write(DocumentFile file, String contents) throws Exception {
+        try (OutputStream output = context.getContentResolver().openOutputStream(file.getUri(), "wt")) {
+            assertNotNull(output);
+            output.write(contents.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    private String read(DocumentFile file) throws Exception {
+        try (InputStream input = context.getContentResolver().openInputStream(file.getUri())) {
+            assertNotNull(input);
+            byte[] buffer = new byte[1024];
+            int count = input.read(buffer);
+            return count < 0 ? "" : new String(buffer, 0, count, StandardCharsets.UTF_8);
+        }
     }
 }

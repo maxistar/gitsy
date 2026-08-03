@@ -1,5 +1,6 @@
 package me.maxistar.gitsy;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -93,65 +94,41 @@ public class ProjectService extends Service {
     }
 
     private void syncProject(ProjectModel project) {
-        project.setStatus(ProjectModel.STATUS_SYNC_IN_PROGRESS);
-        EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
+        SyncCoordinator coordinator = new SyncCoordinator(
+                currentProject -> {
+                    updateNotification("Copy changes to git");
+                    fileStorageService.copyFromSaf(
+                            getApplicationContext(),
+                            Uri.parse(currentProject.getFolderUri()),
+                            currentProject.getFolderName());
+                },
+                currentProject -> {
+                    updateNotification("Synchronization");
+                    gitService.syncRepository(
+                            getApplicationContext(),
+                            currentProject.getFolderName(),
+                            currentProject.getUserName(),
+                            currentProject.getPassword());
+                },
+                currentProject -> {
+                    updateNotification("Copy changes to local folder");
+                    fileStorageService.copyToSaf(
+                            getApplicationContext(),
+                            currentProject.getFolderName(),
+                            Uri.parse(currentProject.getFolderUri()));
+                },
+                System::currentTimeMillis,
+                currentProject -> EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!")));
 
-        try {
-
-            updateNotification("Copy changes to git");
-
-            fileStorageService.copyFromSaf(
-                    getApplicationContext(),
-                    Uri.parse(project.getFolderUri()),
-                    project.getFolderName()
-            );
-
-            updateNotification("Synchronization");
-
-// todo auto fix when locked
-//            File lockFile = new File("/data/user/0/me.maxistar.gitsync/files/project_1738597560466/.git/index.lock");
-//            lockFile.delete();
-
-            gitService.syncRepository(
-                    getApplicationContext(),
-                    project.getFolderName(),
-                    project.getUserName(),
-                    project.getPassword()
-            );
-
-            updateNotification("Copy changes to local folder");
-
-            fileStorageService.copyToSaf(
-                    getApplicationContext(),
-                    project.getFolderName(),
-                    Uri.parse(project.getFolderUri())
-            );
-
-
-            project.setStatus(ProjectModel.STATUS_READY);
-            project.setLastSync(System.currentTimeMillis());
-            EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
-
-
-        } catch (Exception e) {
-
-
-
-            project.setStatus(ProjectModel.STATUS_SYNC_ERROR);
-
-
-
-            EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
-
-
+        SyncCoordinator.Result result = coordinator.synchronize(project);
+        if (!result.isSuccess()) {
+            Exception error = result.getError();
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
                 }
             });
-
-
         }
     }
 
@@ -195,6 +172,7 @@ public class ProjectService extends Service {
         }
     }
 
+    @SuppressLint("NotificationPermission") // Foreground-service notifications remain visible in Task Manager when notification permission is denied.
     private void updateNotification(String text) {
         notificationBuilder.setContentText(text);
         notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build());

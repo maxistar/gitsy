@@ -13,6 +13,31 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 
 public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDeserializer<ProjectModel>  {
+    interface CredentialCodec {
+        String encrypt(String value, String associatedData) throws Exception;
+        String decrypt(String value, String associatedData) throws Exception;
+    }
+
+    private final CredentialCodec credentialCodec;
+
+    public ProjectJsonAdapter() {
+        this(new CredentialCodec() {
+            @Override
+            public String encrypt(String value, String associatedData) throws Exception {
+                return ServiceLocator.getInstance().getValueEncryptor().encryptValue(value, associatedData);
+            }
+
+            @Override
+            public String decrypt(String value, String associatedData) throws Exception {
+                return ServiceLocator.getInstance().getValueEncryptor().decryptValue(value, associatedData);
+            }
+        });
+    }
+
+    ProjectJsonAdapter(CredentialCodec credentialCodec) {
+        this.credentialCodec = credentialCodec;
+    }
+
     @Override
     public JsonElement serialize(ProjectModel src, Type typeOfSrc, JsonSerializationContext context) {
         JsonObject obj = new JsonObject();
@@ -27,7 +52,7 @@ public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDes
 
         try {
             if (src.password != null) {
-                String enc = ServiceLocator.getInstance().getValueEncryptor().encryptValue(src.password, src.userName); // AAD = userName
+                String enc = credentialCodec.encrypt(src.password, src.userName);
                 obj.addProperty("password", enc);
             } else {
                 obj.add("password", JsonNull.INSTANCE);
@@ -48,20 +73,30 @@ public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDes
                 obj.get("folderUri").getAsString()
         );
 
-        p.folderName = obj.get("folderName").getAsString();
-        p.lastSync = obj.get("lastSync").getAsLong();
-        p.numberFiles = obj.get("numberFiles").getAsInt();
-        p.status = obj.get("status").getAsInt();
+        if (obj.has("folderName") && !obj.get("folderName").isJsonNull()) {
+            p.folderName = obj.get("folderName").getAsString();
+        }
+        p.lastSync = longValue(obj, "lastSync", 0L);
+        p.numberFiles = intValue(obj, "numberFiles", 0);
+        p.status = intValue(obj, "status", ProjectModel.STATUS_TO_CLONE);
 
         if (obj.has("password") && !obj.get("password").isJsonNull()) {
             String blob = obj.get("password").getAsString();
             try {
-                p.password = ServiceLocator.getInstance().getValueEncryptor().decryptValue(blob, p.userName); // AAD = userName
+                p.password = credentialCodec.decrypt(blob, p.userName);
             } catch (Exception e) {
                 throw new JsonParseException("Failed to decrypt password", e);
             }
         }
         return p;
+    }
+
+    private static long longValue(JsonObject obj, String name, long defaultValue) {
+        return obj.has(name) && !obj.get(name).isJsonNull() ? obj.get(name).getAsLong() : defaultValue;
+    }
+
+    private static int intValue(JsonObject obj, String name, int defaultValue) {
+        return obj.has(name) && !obj.get(name).isJsonNull() ? obj.get(name).getAsInt() : defaultValue;
     }
 
 }

@@ -94,6 +94,8 @@ public class FileUtils {
                     // Add to list
                     fileInfos.add(new SAFFileInfo(fileName, modificationTime, size, documentUri, fileType));
                 }
+            } else {
+                throw new IllegalStateException("Document provider returned no result for " + folderUri);
             }
         }
 
