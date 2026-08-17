@@ -14,6 +14,12 @@
         app:iconTint="@color/colorIcon" />
 
     <item
+        android:id="@+id/menu_startup_sync_settings"
+        android:title="@string/startup_sync_settings_menu"
+        android:icon="@drawable/ic_settings"
+        app:iconTint="@color/colorIcon" />
+
+    <item
         android:id="@+id/menu_about"
         android:title="@string/About"
         android:icon="@drawable/ic_share"

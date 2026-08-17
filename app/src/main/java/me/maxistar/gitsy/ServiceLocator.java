@@ -9,6 +9,8 @@ public class ServiceLocator {
 
     private ValueEncryptor valueEncryptor = null;
 
+    private final StartupSyncRunGuard startupSyncRunGuard = new StartupSyncRunGuard();
+
     public static ServiceLocator getInstance() {
         if (instance == null) {
             synchronized(ServiceLocator.class) {
@@ -31,5 +33,9 @@ public class ServiceLocator {
             valueEncryptor.ensureKey();
         }
         return valueEncryptor;
+    }
+
+    public StartupSyncRunGuard getStartupSyncRunGuard() {
+        return startupSyncRunGuard;
     }
 }

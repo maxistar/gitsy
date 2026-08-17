@@ -30,4 +30,16 @@
 
     <string name="application_was_stopped">L\'applicazione è stata arrestata</string>
     <string name="application_was_stopped_message">Sembra che l\'applicazione sia stata arrestata durante la sincronizzazione. Questo potrebbe causare risultati imprevisti, tieni l\'applicazione aperta durante la sincronizzazione!</string>
+    <string name="startup_sync_settings_menu">Sincronizzazione all’avvio</string>
+    <string name="startup_sync_settings_title">Sincronizzazione all’avvio</string>
+    <string name="startup_sync_explanation">Scegli se sincronizzare automaticamente i progetti all’avvio di GitSy.</string>
+    <string name="startup_sync_mode_never">Mai</string>
+    <string name="startup_sync_mode_if_stale">Se non aggiornati</string>
+    <string name="startup_sync_mode_always">Sempre</string>
+    <string name="startup_sync_interval_label">Sincronizza quando l’ultima sincronizzazione risale a più di</string>
+    <string name="startup_sync_interval_15_minutes">15 minuti</string>
+    <string name="startup_sync_interval_1_hour">1 ora</string>
+    <string name="startup_sync_interval_6_hours">6 ore</string>
+    <string name="startup_sync_interval_24_hours">24 ore</string>
+    <string name="save">Salva</string>
 </resources>

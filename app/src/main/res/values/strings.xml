@@ -31,4 +31,17 @@
     <string name="application_was_stopped">Application was stopped</string>
     <string name="application_was_stopped_message">Looks like application was stopped during synchronization process, this could cause unexpected results, please keep application open during synchronization!</string>
 
+    <string name="startup_sync_settings_menu">Startup synchronization</string>
+    <string name="startup_sync_settings_title">Startup synchronization</string>
+    <string name="startup_sync_explanation">Choose whether projects synchronize automatically when GitSy starts.</string>
+    <string name="startup_sync_mode_never">Never</string>
+    <string name="startup_sync_mode_if_stale">If stale</string>
+    <string name="startup_sync_mode_always">Always</string>
+    <string name="startup_sync_interval_label">Synchronize when last sync is older than</string>
+    <string name="startup_sync_interval_15_minutes">15 minutes</string>
+    <string name="startup_sync_interval_1_hour">1 hour</string>
+    <string name="startup_sync_interval_6_hours">6 hours</string>
+    <string name="startup_sync_interval_24_hours">24 hours</string>
+    <string name="save">Save</string>
+
 </resources>

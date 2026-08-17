@@ -30,4 +30,16 @@
 
     <string name="application_was_stopped">Приложение было остановлено</string>
     <string name="application_was_stopped_message">Похоже, приложение было остановлено во время синхронизации. Это может привести к непредвиденным результатам, пожалуйста, держите приложение открытым во время синхронизации!</string>
+    <string name="startup_sync_settings_menu">Синхронизация при запуске</string>
+    <string name="startup_sync_settings_title">Синхронизация при запуске</string>
+    <string name="startup_sync_explanation">Выберите, нужно ли автоматически синхронизировать проекты при запуске GitSy.</string>
+    <string name="startup_sync_mode_never">Никогда</string>
+    <string name="startup_sync_mode_if_stale">Если устарели</string>
+    <string name="startup_sync_mode_always">Всегда</string>
+    <string name="startup_sync_interval_label">Синхронизировать, если с последней синхронизации прошло больше</string>
+    <string name="startup_sync_interval_15_minutes">15 минут</string>
+    <string name="startup_sync_interval_1_hour">1 часа</string>
+    <string name="startup_sync_interval_6_hours">6 часов</string>
+    <string name="startup_sync_interval_24_hours">24 часов</string>
+    <string name="save">Сохранить</string>
 </resources>
