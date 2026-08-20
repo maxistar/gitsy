@@ -30,4 +30,40 @@
 
     <string name="application_was_stopped">Приложение было остановлено</string>
     <string name="application_was_stopped_message">Похоже, приложение было остановлено во время синхронизации. Это может привести к непредвиденным результатам, пожалуйста, держите приложение открытым во время синхронизации!</string>
+    <string name="startup_sync_settings_menu">Синхронизация при запуске</string>
+    <string name="startup_sync_settings_title">Синхронизация при запуске</string>
+    <string name="startup_sync_explanation">Выберите, нужно ли автоматически синхронизировать проекты при запуске GitSy.</string>
+    <string name="startup_sync_mode_never">Никогда</string>
+    <string name="startup_sync_mode_ask_if_stale">Спрашивать, если устарели</string>
+    <string name="startup_sync_mode_if_stale">Если устарели</string>
+    <string name="startup_sync_mode_always">Всегда</string>
+    <string name="startup_sync_interval_label">Синхронизировать, если с последней синхронизации прошло больше</string>
+    <string name="startup_sync_interval_15_minutes">15 минут</string>
+    <string name="startup_sync_interval_1_hour">1 часа</string>
+    <string name="startup_sync_interval_6_hours">6 часов</string>
+    <string name="startup_sync_interval_24_hours">24 часов</string>
+    <string name="save">Сохранить</string>
+    <string name="startup_sync_prompt_title">Синхронизировать проекты?</string>
+    <plurals name="startup_sync_prompt_message">
+        <item quantity="one">%1$d проект не синхронизировался более %2$s. Синхронизировать сейчас?</item>
+        <item quantity="few">%1$d проекта не синхронизировались более %2$s. Синхронизировать сейчас?</item>
+        <item quantity="many">%1$d проектов не синхронизировались более %2$s. Синхронизировать сейчас?</item>
+        <item quantity="other">%1$d проекта не синхронизировались более %2$s. Синхронизировать сейчас?</item>
+    </plurals>
+    <string name="startup_sync_prompt_synchronize">Синхронизировать</string>
+    <string name="startup_sync_prompt_not_now">Не сейчас</string>
+    <string name="startup_sync_remember_choice">Запомнить мой выбор</string>
+    <string name="settings_title">Настройки</string>
+    <string name="settings_sync_section">Синхронизация</string>
+    <string name="startup_sync_explanation_never">Проекты синхронизируются только по ручному запросу.</string>
+    <string name="startup_sync_explanation_ask">GitSy спрашивает перед синхронизацией проектов старше выбранного интервала.</string>
+    <string name="startup_sync_explanation_if_stale">Проекты старше выбранного интервала синхронизируются автоматически.</string>
+    <string name="startup_sync_explanation_always">Подходящие проекты синхронизируются при каждом запуске GitSy.</string>
+    <string name="settings_about_section">О приложении</string>
+    <string name="settings_about_version">GitSy\nВерсия %1$s</string>
+    <string name="settings_version_unknown">Неизвестна</string>
+    <string name="settings_website">Веб-сайт</string>
+    <string name="settings_documentation">Документация</string>
+    <string name="settings_terms">Условия использования</string>
+    <string name="settings_link_error">Нет приложения для открытия этой ссылки.</string>
 </resources>

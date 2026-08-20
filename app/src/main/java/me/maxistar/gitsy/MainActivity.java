@@ -7,19 +7,13 @@ import androidx.appcompat.view.menu.MenuBuilder;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -28,14 +22,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements ProjectAdapter.OnProjectListener {
+public class MainActivity extends AppCompatActivity implements
+        ProjectAdapter.OnProjectListener, StartupSyncPromptDialogFragment.Listener {
 
     private ProjectViewModel viewModel;
     private RecyclerView recyclerView;
     private ProjectAdapter adapter;
     private View emptyView;
+    private StartupSyncSession startupSyncSession;
+    private SharedPreferencesStartupSyncSettings startupSettingsRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +60,17 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         viewModel.getProjects().observe(this, projects -> {
             adapter.setProjects(projects);
             checkIfEmpty(projects.size());
+        });
+        startupSyncSession = ServiceLocator.getInstance().getStartupSyncSession();
+        startupSettingsRepository = new SharedPreferencesStartupSyncSettings(getApplicationContext());
+        viewModel.getProjectsLoaded().observe(this, loaded -> {
+            if (!Boolean.TRUE.equals(loaded)) return;
+            List<ProjectModel> loadedProjects = viewModel.getProjects().getValue();
+            handleStartupDecision(startupSyncSession.evaluate(
+                    true,
+                    ProjectService.started,
+                    startupSettingsRepository.load(),
+                    loadedProjects == null ? Collections.emptyList() : loadedProjects));
         });
         viewModel.loadProjects(getApplicationContext());
         registerForContextMenu(recyclerView);
@@ -93,11 +103,34 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         // } catch (Exception e) {
         //     e.printStackTrace();
         // }
+    }
 
+    private void handleStartupDecision(StartupSyncSession.Decision decision) {
+        if (decision.getRememberedMode() != null) {
+            StartupSyncSettings current = startupSettingsRepository.load();
+            startupSettingsRepository.save(new StartupSyncSettings(
+                    decision.getRememberedMode(), current.getInterval()));
+        }
+        if (decision.getType() == StartupSyncSession.DecisionType.RECOVERY_REQUIRED) {
+            showInterruptedOperationRecovery();
+        } else if (decision.getType() == StartupSyncSession.DecisionType.PROMPT) {
+            if (getSupportFragmentManager().findFragmentByTag(StartupSyncPromptDialogFragment.TAG) == null
+                    && !getSupportFragmentManager().isStateSaved()) {
+                StartupSyncPromptDialogFragment.newInstance(
+                        decision.getPendingCount(), decision.getInterval())
+                        .show(getSupportFragmentManager(), StartupSyncPromptDialogFragment.TAG);
+            }
+        } else if (decision.getType() == StartupSyncSession.DecisionType.START) {
+            viewModel.syncProjects(getApplicationContext(), decision.getProjects());
+            startService(new Intent(this, ProjectService.class));
+        }
+    }
 
-        // if need to sync - sync it!
-        new Handler().postDelayed(this::syncAllReposOlderThanHour, 1000);
-
+    @Override
+    public void onStartupSyncResponse(boolean synchronize, boolean remember) {
+        List<ProjectModel> current = viewModel.getProjects().getValue();
+        handleStartupDecision(startupSyncSession.respond(
+                synchronize, remember, current == null ? Collections.emptyList() : current));
     }
 
     @Override
@@ -169,46 +202,6 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         startActivity(intent);
     }
 
-    void showAboutBox() {
-        // Inflate the dialog layout
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_about_box, null);
-
-        String versionName = "1.0.0"; // Default value in case version retrieval fails
-        try {
-            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            versionName = packageInfo.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        // Set app info text with the version
-        TextView appInfo = dialogView.findViewById(R.id.app_info);
-        appInfo.setText("Android GitSy\nVersion " + versionName);
-
-        // Create and show the dialog
-        AlertDialog aboutDialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .setTitle("About")
-                .setPositiveButton("Close", (dialog, which) -> dialog.dismiss())
-                .create();
-
-        // Set click listeners for links
-        TextView termsAndConditions = dialogView.findViewById(R.id.terms_and_conditions);
-        TextView appWebsite = dialogView.findViewById(R.id.app_website);
-
-        termsAndConditions.setOnClickListener(v -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://gitsy.de/terms"));
-            startActivity(browserIntent);
-        });
-
-        appWebsite.setOnClickListener(v -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://gitsy.de/"));
-            startActivity(browserIntent);
-        });
-
-        aboutDialog.show();
-    }
-
     @SuppressLint("RestrictedApi")
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -239,12 +232,13 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
-        if (itemId == R.id.menu_about) {
-            showAboutBox();
-        } else if (itemId == R.id.menu_add_repo) {
+        if (itemId == R.id.menu_add_repo) {
             addRepository();
         } else if (itemId == R.id.menu_sync_all) {
             syncAllRepos();
+        } else if (itemId == R.id.menu_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -255,23 +249,12 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         startService(startIntent);
     }
 
-    private void syncAllReposOlderThanHour() {
-        // check if application was kicked out
-        if (!ProjectService.started && viewModel.workInProgress()) {
-            // show message to clean up projects database
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.application_was_stopped)
-                    .setMessage(R.string.application_was_stopped_message)
-                    .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                        resetProjectsStatus();
-                    })
-                    .show();
-        }
-
-
-        if (viewModel.allElementsAreReady()) {
-            viewModel.syncAllProjectsOlderThanHour(getApplicationContext());
-        }
+    private void showInterruptedOperationRecovery() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.application_was_stopped)
+                .setMessage(R.string.application_was_stopped_message)
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> resetProjectsStatus())
+                .show();
     }
 
     private void resetProjectsStatus() {

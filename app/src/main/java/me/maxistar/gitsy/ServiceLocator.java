@@ -9,6 +9,8 @@ public class ServiceLocator {
 
     private ValueEncryptor valueEncryptor = null;
 
+    private StartupSyncSession startupSyncSession = new StartupSyncSession();
+
     public static ServiceLocator getInstance() {
         if (instance == null) {
             synchronized(ServiceLocator.class) {
@@ -31,5 +33,13 @@ public class ServiceLocator {
             valueEncryptor.ensureKey();
         }
         return valueEncryptor;
+    }
+
+    public StartupSyncSession getStartupSyncSession() {
+        return startupSyncSession;
+    }
+
+    void replaceStartupSyncSessionForTests(StartupSyncSession startupSyncSession) {
+        this.startupSyncSession = startupSyncSession;
     }
 }

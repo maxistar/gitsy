@@ -29,6 +29,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".EditProjectActivity" />
+        <activity android:name=".SettingsActivity" />
 
         <service
             android:name=".ProjectService"

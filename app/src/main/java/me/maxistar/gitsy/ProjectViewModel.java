@@ -1,8 +1,6 @@
 package me.maxistar.gitsy;
 
 import android.content.Context;
-import android.content.Intent;
-
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -12,6 +10,7 @@ import java.util.List;
 
 public class ProjectViewModel extends ViewModel {
     private final MutableLiveData<List<ProjectModel>> projects;
+    private final MutableLiveData<Boolean> projectsLoaded = new MutableLiveData<>(false);
     private final ProjectRepository repository;
 
     public ProjectViewModel() {
@@ -24,11 +23,16 @@ public class ProjectViewModel extends ViewModel {
         new Thread(() -> {
             List<ProjectModel> loadedProjects = repository.loadProjects(context); // Assume this is a public method now
             projects.postValue(loadedProjects);
+            projectsLoaded.postValue(true);
         }).start();
     }
 
     public LiveData<List<ProjectModel>> getProjects() {
         return projects;
+    }
+
+    public LiveData<Boolean> getProjectsLoaded() {
+        return projectsLoaded;
     }
 
     public void addProject(Context context, ProjectModel project) {
@@ -73,23 +77,12 @@ public class ProjectViewModel extends ViewModel {
     }
 
 
-    public void syncAllProjectsOlderThanHour(Context context) {
-        List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
-        long currentTime = System.currentTimeMillis();
-        boolean triggerService = false;
-        for (ProjectModel model : currentProjects) {
-            if (currentTime - model.getLastSync() > 60 * 60 * 1000) {
-                model.setStatus(ProjectModel.STATUS_TO_SYNC);
-                triggerService = true;
-            }
+    public void syncProjects(Context context, List<ProjectModel> selectedProjects) {
+        for (ProjectModel model : selectedProjects) {
+            model.setStatus(ProjectModel.STATUS_TO_SYNC);
         }
-        if (triggerService) {
-            repository.saveProjects(context);
-            projects.setValue(repository.getProjects());
-
-            Intent startIntent = new Intent(context, ProjectService.class);
-            context.startService(startIntent);
-        }
+        repository.saveProjects(context);
+        projects.setValue(repository.getProjects());
     }
 
     public boolean allElementsAreReady() {

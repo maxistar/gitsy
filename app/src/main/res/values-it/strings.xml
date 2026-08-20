@@ -30,4 +30,38 @@
 
     <string name="application_was_stopped">L\'applicazione è stata arrestata</string>
     <string name="application_was_stopped_message">Sembra che l\'applicazione sia stata arrestata durante la sincronizzazione. Questo potrebbe causare risultati imprevisti, tieni l\'applicazione aperta durante la sincronizzazione!</string>
+    <string name="startup_sync_settings_menu">Sincronizzazione all’avvio</string>
+    <string name="startup_sync_settings_title">Sincronizzazione all’avvio</string>
+    <string name="startup_sync_explanation">Scegli se sincronizzare automaticamente i progetti all’avvio di GitSy.</string>
+    <string name="startup_sync_mode_never">Mai</string>
+    <string name="startup_sync_mode_ask_if_stale">Chiedi se non aggiornati</string>
+    <string name="startup_sync_mode_if_stale">Se non aggiornati</string>
+    <string name="startup_sync_mode_always">Sempre</string>
+    <string name="startup_sync_interval_label">Sincronizza quando l’ultima sincronizzazione risale a più di</string>
+    <string name="startup_sync_interval_15_minutes">15 minuti</string>
+    <string name="startup_sync_interval_1_hour">1 ora</string>
+    <string name="startup_sync_interval_6_hours">6 ore</string>
+    <string name="startup_sync_interval_24_hours">24 ore</string>
+    <string name="save">Salva</string>
+    <string name="startup_sync_prompt_title">Sincronizzare i progetti?</string>
+    <plurals name="startup_sync_prompt_message">
+        <item quantity="one">%1$d progetto non è stato sincronizzato da %2$s. Sincronizzarlo ora?</item>
+        <item quantity="other">%1$d progetti non sono stati sincronizzati da %2$s. Sincronizzarli ora?</item>
+    </plurals>
+    <string name="startup_sync_prompt_synchronize">Sincronizza</string>
+    <string name="startup_sync_prompt_not_now">Non ora</string>
+    <string name="startup_sync_remember_choice">Ricorda la mia scelta</string>
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_sync_section">Sincronizzazione</string>
+    <string name="startup_sync_explanation_never">I progetti vengono sincronizzati solo su richiesta manuale.</string>
+    <string name="startup_sync_explanation_ask">GitSy chiede conferma prima di sincronizzare i progetti più vecchi dell’intervallo selezionato.</string>
+    <string name="startup_sync_explanation_if_stale">I progetti più vecchi dell’intervallo selezionato vengono sincronizzati automaticamente.</string>
+    <string name="startup_sync_explanation_always">I progetti idonei vengono sincronizzati a ogni avvio di GitSy.</string>
+    <string name="settings_about_section">Informazioni</string>
+    <string name="settings_about_version">GitSy\nVersione %1$s</string>
+    <string name="settings_version_unknown">Sconosciuta</string>
+    <string name="settings_website">Sito web</string>
+    <string name="settings_documentation">Documentazione</string>
+    <string name="settings_terms">Termini e condizioni</string>
+    <string name="settings_link_error">Nessuna applicazione può aprire questo collegamento.</string>
 </resources>
