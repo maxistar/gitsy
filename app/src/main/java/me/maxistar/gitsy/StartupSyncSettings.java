@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public final class StartupSyncSettings {
     public static final StartupSyncSettings DEFAULT =
-            new StartupSyncSettings(StartupSyncMode.IF_STALE, StartupSyncInterval.ONE_HOUR);
+            new StartupSyncSettings(StartupSyncMode.ASK_IF_STALE, StartupSyncInterval.ONE_HOUR);
 
     private final StartupSyncMode mode;
     private final StartupSyncInterval interval;

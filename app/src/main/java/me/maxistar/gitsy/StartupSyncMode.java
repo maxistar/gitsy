@@ -2,6 +2,7 @@ package me.maxistar.gitsy;
 
 public enum StartupSyncMode {
     NEVER("never"),
+    ASK_IF_STALE("ask_if_stale"),
     IF_STALE("if_stale"),
     ALWAYS("always");
 
@@ -13,6 +14,10 @@ public enum StartupSyncMode {
 
     public String getPreferenceValue() {
         return preferenceValue;
+    }
+
+    public boolean usesStaleInterval() {
+        return this == ASK_IF_STALE || this == IF_STALE;
     }
 
     public static StartupSyncMode fromPreferenceValue(String value) {

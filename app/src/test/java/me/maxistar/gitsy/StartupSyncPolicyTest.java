@@ -40,6 +40,18 @@ public class StartupSyncPolicyTest {
     }
 
     @Test
+    public void askIfStaleSelectsExactlyTheSameProjectsAsIfStale() {
+        List<ProjectModel> projects = Arrays.asList(
+                ready(NOW - StartupSyncInterval.SIX_HOURS.getMilliseconds()),
+                ready(NOW - 1),
+                project(ProjectModel.STATUS_SYNC_ERROR, 0),
+                project(ProjectModel.STATUS_SYNC_IN_PROGRESS, 0));
+        assertEquals(
+                policy.select(settings(StartupSyncMode.IF_STALE, StartupSyncInterval.SIX_HOURS), NOW, projects),
+                policy.select(settings(StartupSyncMode.ASK_IF_STALE, StartupSyncInterval.SIX_HOURS), NOW, projects));
+    }
+
+    @Test
     public void emptyListSelectsNothingInEveryMode() {
         for (StartupSyncMode mode : StartupSyncMode.values()) {
             assertTrue(policy.select(settings(mode, StartupSyncInterval.ONE_HOUR),
@@ -51,9 +63,11 @@ public class StartupSyncPolicyTest {
     public void exactBoundaryIsEligibleForEveryInterval() {
         for (StartupSyncInterval interval : StartupSyncInterval.values()) {
             ProjectModel project = ready(NOW - interval.getMilliseconds());
-            assertEquals(Collections.singletonList(project), policy.select(
-                    settings(StartupSyncMode.IF_STALE, interval), NOW,
-                    Collections.singletonList(project)));
+            for (StartupSyncMode mode : Arrays.asList(
+                    StartupSyncMode.ASK_IF_STALE, StartupSyncMode.IF_STALE)) {
+                assertEquals(Collections.singletonList(project), policy.select(
+                        settings(mode, interval), NOW, Collections.singletonList(project)));
+            }
         }
     }
 

@@ -7,20 +7,13 @@ import androidx.appcompat.view.menu.MenuBuilder;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RadioGroup;
-import android.widget.TextView;
 
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -33,12 +26,15 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements ProjectAdapter.OnProjectListener {
+public class MainActivity extends AppCompatActivity implements
+        ProjectAdapter.OnProjectListener, StartupSyncPromptDialogFragment.Listener {
 
     private ProjectViewModel viewModel;
     private RecyclerView recyclerView;
     private ProjectAdapter adapter;
     private View emptyView;
+    private StartupSyncSession startupSyncSession;
+    private SharedPreferencesStartupSyncSettings startupSettingsRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,14 +61,16 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
             adapter.setProjects(projects);
             checkIfEmpty(projects.size());
         });
-        StartupSyncCoordinator startupSyncCoordinator = createStartupSyncCoordinator();
+        startupSyncSession = ServiceLocator.getInstance().getStartupSyncSession();
+        startupSettingsRepository = new SharedPreferencesStartupSyncSettings(getApplicationContext());
         viewModel.getProjectsLoaded().observe(this, loaded -> {
             if (!Boolean.TRUE.equals(loaded)) return;
             List<ProjectModel> loadedProjects = viewModel.getProjects().getValue();
-            startupSyncCoordinator.onProjectsChanged(
+            handleStartupDecision(startupSyncSession.evaluate(
                     true,
                     ProjectService.started,
-                    loadedProjects == null ? Collections.emptyList() : loadedProjects);
+                    startupSettingsRepository.load(),
+                    loadedProjects == null ? Collections.emptyList() : loadedProjects));
         });
         viewModel.loadProjects(getApplicationContext());
         registerForContextMenu(recyclerView);
@@ -107,24 +105,32 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         // }
     }
 
-    private StartupSyncCoordinator createStartupSyncCoordinator() {
-        return new StartupSyncCoordinator(
-                new SharedPreferencesStartupSyncSettings(getApplicationContext()),
-                new StartupSyncPolicy(),
-                ServiceLocator.getInstance().getStartupSyncRunGuard(),
-                System::currentTimeMillis,
-                new StartupSyncCoordinator.Actions() {
-                    @Override
-                    public void showRecovery() {
-                        showInterruptedOperationRecovery();
-                    }
+    private void handleStartupDecision(StartupSyncSession.Decision decision) {
+        if (decision.getRememberedMode() != null) {
+            StartupSyncSettings current = startupSettingsRepository.load();
+            startupSettingsRepository.save(new StartupSyncSettings(
+                    decision.getRememberedMode(), current.getInterval()));
+        }
+        if (decision.getType() == StartupSyncSession.DecisionType.RECOVERY_REQUIRED) {
+            showInterruptedOperationRecovery();
+        } else if (decision.getType() == StartupSyncSession.DecisionType.PROMPT) {
+            if (getSupportFragmentManager().findFragmentByTag(StartupSyncPromptDialogFragment.TAG) == null
+                    && !getSupportFragmentManager().isStateSaved()) {
+                StartupSyncPromptDialogFragment.newInstance(
+                        decision.getPendingCount(), decision.getInterval())
+                        .show(getSupportFragmentManager(), StartupSyncPromptDialogFragment.TAG);
+            }
+        } else if (decision.getType() == StartupSyncSession.DecisionType.START) {
+            viewModel.syncProjects(getApplicationContext(), decision.getProjects());
+            startService(new Intent(this, ProjectService.class));
+        }
+    }
 
-                    @Override
-                    public void synchronize(List<ProjectModel> projects) {
-                        viewModel.syncProjects(getApplicationContext(), projects);
-                        startService(new Intent(MainActivity.this, ProjectService.class));
-                    }
-                });
+    @Override
+    public void onStartupSyncResponse(boolean synchronize, boolean remember) {
+        List<ProjectModel> current = viewModel.getProjects().getValue();
+        handleStartupDecision(startupSyncSession.respond(
+                synchronize, remember, current == null ? Collections.emptyList() : current));
     }
 
     @Override
@@ -196,46 +202,6 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
         startActivity(intent);
     }
 
-    void showAboutBox() {
-        // Inflate the dialog layout
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_about_box, null);
-
-        String versionName = "1.0.0"; // Default value in case version retrieval fails
-        try {
-            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            versionName = packageInfo.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        // Set app info text with the version
-        TextView appInfo = dialogView.findViewById(R.id.app_info);
-        appInfo.setText("Android GitSy\nVersion " + versionName);
-
-        // Create and show the dialog
-        AlertDialog aboutDialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .setTitle("About")
-                .setPositiveButton("Close", (dialog, which) -> dialog.dismiss())
-                .create();
-
-        // Set click listeners for links
-        TextView termsAndConditions = dialogView.findViewById(R.id.terms_and_conditions);
-        TextView appWebsite = dialogView.findViewById(R.id.app_website);
-
-        termsAndConditions.setOnClickListener(v -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://gitsy.de/terms"));
-            startActivity(browserIntent);
-        });
-
-        appWebsite.setOnClickListener(v -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://gitsy.de/"));
-            startActivity(browserIntent);
-        });
-
-        aboutDialog.show();
-    }
-
     @SuppressLint("RestrictedApi")
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -266,79 +232,15 @@ public class MainActivity extends AppCompatActivity implements ProjectAdapter.On
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
-        if (itemId == R.id.menu_about) {
-            showAboutBox();
-        } else if (itemId == R.id.menu_add_repo) {
+        if (itemId == R.id.menu_add_repo) {
             addRepository();
         } else if (itemId == R.id.menu_sync_all) {
             syncAllRepos();
-        } else if (itemId == R.id.menu_startup_sync_settings) {
-            showStartupSyncSettings();
+        } else if (itemId == R.id.menu_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    void showStartupSyncSettings() {
-        SharedPreferencesStartupSyncSettings repository =
-                new SharedPreferencesStartupSyncSettings(getApplicationContext());
-        StartupSyncSettings settings = repository.load();
-        View dialogView = LayoutInflater.from(this)
-                .inflate(R.layout.dialog_startup_sync_settings, null);
-        RadioGroup modeGroup = dialogView.findViewById(R.id.startup_sync_mode_group);
-        RadioGroup intervalGroup = dialogView.findViewById(R.id.startup_sync_interval_group);
-        TextView intervalLabel = dialogView.findViewById(R.id.startup_sync_interval_label);
-
-        modeGroup.check(modeButtonId(settings.getMode()));
-        intervalGroup.check(intervalButtonId(settings.getInterval()));
-        updateIntervalControls(modeGroup, intervalGroup, intervalLabel);
-        modeGroup.setOnCheckedChangeListener((group, checkedId) ->
-                updateIntervalControls(group, intervalGroup, intervalLabel));
-
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.startup_sync_settings_title)
-                .setView(dialogView)
-                .setPositiveButton(R.string.save, (dialog, which) -> repository.save(
-                        new StartupSyncSettings(
-                                modeFromButtonId(modeGroup.getCheckedRadioButtonId()),
-                                intervalFromButtonId(intervalGroup.getCheckedRadioButtonId()))))
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
-    private void updateIntervalControls(
-            RadioGroup modeGroup, RadioGroup intervalGroup, TextView intervalLabel) {
-        boolean enabled = modeGroup.getCheckedRadioButtonId() == R.id.startup_sync_mode_if_stale;
-        intervalGroup.setEnabled(enabled);
-        intervalLabel.setEnabled(enabled);
-        for (int index = 0; index < intervalGroup.getChildCount(); index++) {
-            intervalGroup.getChildAt(index).setEnabled(enabled);
-        }
-    }
-
-    private int modeButtonId(StartupSyncMode mode) {
-        if (mode == StartupSyncMode.NEVER) return R.id.startup_sync_mode_never;
-        if (mode == StartupSyncMode.ALWAYS) return R.id.startup_sync_mode_always;
-        return R.id.startup_sync_mode_if_stale;
-    }
-
-    private StartupSyncMode modeFromButtonId(int id) {
-        if (id == R.id.startup_sync_mode_never) return StartupSyncMode.NEVER;
-        if (id == R.id.startup_sync_mode_always) return StartupSyncMode.ALWAYS;
-        return StartupSyncMode.IF_STALE;
-    }
-
-    private int intervalButtonId(StartupSyncInterval interval) {
-        if (interval == StartupSyncInterval.FIFTEEN_MINUTES) return R.id.startup_sync_interval_15_minutes;
-        if (interval == StartupSyncInterval.SIX_HOURS) return R.id.startup_sync_interval_6_hours;
-        if (interval == StartupSyncInterval.TWENTY_FOUR_HOURS) return R.id.startup_sync_interval_24_hours;
-        return R.id.startup_sync_interval_1_hour;
-    }
-
-    private StartupSyncInterval intervalFromButtonId(int id) {
-        if (id == R.id.startup_sync_interval_15_minutes) return StartupSyncInterval.FIFTEEN_MINUTES;
-        if (id == R.id.startup_sync_interval_6_hours) return StartupSyncInterval.SIX_HOURS;
-        if (id == R.id.startup_sync_interval_24_hours) return StartupSyncInterval.TWENTY_FOUR_HOURS;
-        return StartupSyncInterval.ONE_HOUR;
     }
 
     private void syncAllRepos() {

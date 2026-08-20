@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settings_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/settings_sync_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_sync_section"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/startup_sync_settings_title"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/startup_sync_mode_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp">
+
+            <RadioButton
+                android:id="@+id/startup_sync_mode_never"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/startup_sync_mode_never" />
+
+            <RadioButton
+                android:id="@+id/startup_sync_mode_ask_if_stale"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/startup_sync_mode_ask_if_stale" />
+
+            <RadioButton
+                android:id="@+id/startup_sync_mode_if_stale"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/startup_sync_mode_if_stale" />
+
+            <RadioButton
+                android:id="@+id/startup_sync_mode_always"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/startup_sync_mode_always" />
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/startup_sync_mode_explanation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/startup_sync_interval_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/startup_sync_interval_label"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/startup_sync_interval_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/startup_sync_interval_15_minutes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/startup_sync_interval_15_minutes" />
+
+            <RadioButton
+                android:id="@+id/startup_sync_interval_1_hour"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/startup_sync_interval_1_hour" />
+
+            <RadioButton
+                android:id="@+id/startup_sync_interval_6_hours"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/startup_sync_interval_6_hours" />
+
+            <RadioButton
+                android:id="@+id/startup_sync_interval_24_hours"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/startup_sync_interval_24_hours" />
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/settings_about_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="@string/settings_about_section"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/settings_about_version"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/settings_website_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingVertical="12dp"
+            android:text="@string/settings_website" />
+
+        <TextView
+            android:id="@+id/settings_documentation_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingVertical="12dp"
+            android:text="@string/settings_documentation" />
+
+        <TextView
+            android:id="@+id/settings_terms_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingVertical="12dp"
+            android:text="@string/settings_terms" />
+    </LinearLayout>
+</ScrollView>

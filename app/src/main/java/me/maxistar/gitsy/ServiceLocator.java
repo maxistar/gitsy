@@ -9,7 +9,7 @@ public class ServiceLocator {
 
     private ValueEncryptor valueEncryptor = null;
 
-    private final StartupSyncRunGuard startupSyncRunGuard = new StartupSyncRunGuard();
+    private StartupSyncSession startupSyncSession = new StartupSyncSession();
 
     public static ServiceLocator getInstance() {
         if (instance == null) {
@@ -35,7 +35,11 @@ public class ServiceLocator {
         return valueEncryptor;
     }
 
-    public StartupSyncRunGuard getStartupSyncRunGuard() {
-        return startupSyncRunGuard;
+    public StartupSyncSession getStartupSyncSession() {
+        return startupSyncSession;
+    }
+
+    void replaceStartupSyncSessionForTests(StartupSyncSession startupSyncSession) {
+        this.startupSyncSession = startupSyncSession;
     }
 }

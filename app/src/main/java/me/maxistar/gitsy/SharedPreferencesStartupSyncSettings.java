@@ -26,9 +26,9 @@ public final class SharedPreferencesStartupSyncSettings implements StartupSyncSe
     @Override
     public StartupSyncSettings load() {
         StartupSyncMode mode = StartupSyncMode.fromPreferenceValue(
-                store.getString(KEY_MODE, StartupSyncMode.IF_STALE.getPreferenceValue()));
+                store.getString(KEY_MODE, StartupSyncSettings.DEFAULT.getMode().getPreferenceValue()));
         StartupSyncInterval interval = StartupSyncInterval.fromPreferenceValue(
-                store.getString(KEY_INTERVAL, StartupSyncInterval.ONE_HOUR.getPreferenceValue()));
+                store.getString(KEY_INTERVAL, StartupSyncSettings.DEFAULT.getInterval().getPreferenceValue()));
         return new StartupSyncSettings(mode, interval);
     }
 
