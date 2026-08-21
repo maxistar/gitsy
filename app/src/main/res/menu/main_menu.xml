@@ -8,8 +8,14 @@
         app:iconTint="@color/colorIcon" />
 
     <item
-        android:id="@+id/menu_about"
-        android:title="@string/About"
+        android:id="@+id/menu_sync_all"
+        android:title="@string/SyncAll"
+        android:icon="@drawable/ic_settings"
+        app:iconTint="@color/colorIcon" />
+
+    <item
+        android:id="@+id/menu_settings"
+        android:title="@string/settings_title"
         android:icon="@drawable/ic_settings"
         app:iconTint="@color/colorIcon" />
 </menu>

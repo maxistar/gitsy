@@ -1,0 +1,6 @@
+{
+  "folderUri": "content://test/tree/legacy",
+  "repoUrl": "https://example.invalid/legacy.git",
+  "userName": "legacy-user",
+  "password": null
+}
