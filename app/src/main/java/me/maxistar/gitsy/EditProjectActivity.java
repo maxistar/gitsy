@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -29,8 +30,18 @@ public class EditProjectActivity extends AppCompatActivity {
     EditText userNameEditor;
 
     EditText passwordEditor;
+    EditText sshPortEditor;
+    RadioGroup authenticationTypeGroup;
+    TextView sshKeyAvailability;
+    TextView sshUsernameSource;
+    TextView sshPortSource;
+    TextView tokenNote;
+    TextView httpsNote;
     private Button saveButton;
     private ProjectViewModel viewModel;
+    private String fallbackSshUsername = "";
+    private String fallbackSshPort = "22";
+    private boolean renderingAuthentication;
 
     private static final int REQUEST_CODE_OPEN_DIRECTORY = 1;
 
@@ -46,6 +57,13 @@ public class EditProjectActivity extends AppCompatActivity {
         repoUrlEditor = this.findViewById(R.id.repoUrlEditor);
         userNameEditor = this.findViewById(R.id.userNameEditor);
         passwordEditor = this.findViewById(R.id.passwordEditor);
+        sshPortEditor = findViewById(R.id.sshPortEditor);
+        authenticationTypeGroup = findViewById(R.id.authenticationTypeGroup);
+        sshKeyAvailability = findViewById(R.id.sshKeyAvailability);
+        sshUsernameSource = findViewById(R.id.sshUsernameSource);
+        sshPortSource = findViewById(R.id.sshPortSource);
+        tokenNote = findViewById(R.id.tokenNote);
+        httpsNote = findViewById(R.id.httpsNote);
         saveButton = findViewById(R.id.buttonSaveProject);
 
         // Set up the Read More link
@@ -68,6 +86,12 @@ public class EditProjectActivity extends AppCompatActivity {
                     repoUrlEditor.setText(project.getRepoUrl());
                     userNameEditor.setText(project.getUserName());
                     passwordEditor.setText(project.getPassword());
+                    if (project.getAuthenticationType() == ProjectAuthenticationType.SSH_KEY) {
+                        fallbackSshUsername = project.getUserName() == null ? "" : project.getUserName();
+                        fallbackSshPort = String.valueOf(project.getSshPort());
+                        authenticationTypeGroup.check(R.id.authenticationTypeSsh);
+                        sshPortEditor.setText(String.valueOf(project.getSshPort()));
+                    }
                     // Update the button text to indicate we're editing
                     saveButton.setText(R.string.update_project);
                     setTitle(R.string.edit_project_title);
@@ -89,6 +113,15 @@ public class EditProjectActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
+                if (renderingAuthentication) return;
+                if (isSshMode()) {
+                    if (s == userNameEditor.getEditableText() && userNameEditor.isEnabled()) {
+                        fallbackSshUsername = s.toString();
+                    } else if (s == sshPortEditor.getEditableText() && sshPortEditor.isEnabled()) {
+                        fallbackSshPort = s.toString();
+                    }
+                    renderSshConnection();
+                }
                 validateFields();
             }
         };
@@ -96,8 +129,14 @@ public class EditProjectActivity extends AppCompatActivity {
         repoUrlEditor.addTextChangedListener(textWatcher);
         userNameEditor.addTextChangedListener(textWatcher);
         passwordEditor.addTextChangedListener(textWatcher);
+        sshPortEditor.addTextChangedListener(textWatcher);
+        authenticationTypeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            renderAuthenticationMode();
+            validateFields();
+        });
 
         // Initial validation
+        renderAuthenticationMode();
         validateFields();
 
         saveButton.setOnClickListener(new View.OnClickListener() {
@@ -123,10 +162,82 @@ public class EditProjectActivity extends AppCompatActivity {
     private void validateFields() {
         String repoUrl = repoUrlEditor.getText().toString().trim();
         String userName = userNameEditor.getText().toString().trim();
-        String password = passwordEditor.getText().toString().trim();
+        ProjectModel candidate = new ProjectModel(repoUrl, userName,
+                passwordEditor.getText().toString().trim(), "pending");
+        if (isSshMode()) {
+            SshConnectionResolution resolution = resolveSshConnection();
+            if (resolution == null) { saveButton.setEnabled(false); return; }
+            candidate.useSshKeyAuthentication(resolution.getUsername(), resolution.getPort());
+        }
+        boolean valid = new ProjectAuthenticationValidator().validate(candidate)
+                == ProjectAuthenticationValidator.Result.VALID;
+        if (isSshMode()) valid = valid && hasGlobalSshKey();
+        saveButton.setEnabled(valid);
+    }
 
-        boolean isValid = !repoUrl.isEmpty() && !userName.isEmpty() && !password.isEmpty();
-        saveButton.setEnabled(isValid);
+    private void renderAuthenticationMode() {
+        boolean ssh = isSshMode();
+        passwordEditor.setVisibility(ssh ? View.GONE : View.VISIBLE);
+        sshPortEditor.setVisibility(ssh ? View.VISIBLE : View.GONE);
+        sshKeyAvailability.setVisibility(ssh ? View.VISIBLE : View.GONE);
+        sshUsernameSource.setVisibility(ssh ? View.VISIBLE : View.GONE);
+        sshPortSource.setVisibility(ssh ? View.VISIBLE : View.GONE);
+        tokenNote.setVisibility(ssh ? View.GONE : View.VISIBLE);
+        httpsNote.setVisibility(ssh ? View.GONE : View.VISIBLE);
+        sshKeyAvailability.setText(hasGlobalSshKey()
+                ? R.string.ssh_key_available : R.string.ssh_key_unavailable);
+        if (ssh) renderSshConnection();
+        else userNameEditor.setEnabled(true);
+    }
+
+    private void renderSshConnection() {
+        if (renderingAuthentication) return;
+        renderingAuthentication = true;
+        try {
+            SshConnectionResolution resolution = resolveSshConnection();
+            boolean usernameFromUrl = resolution != null && resolution.isUsernameFromUrl();
+            boolean portFromUrl = resolution != null && resolution.isPortFromUrl();
+            userNameEditor.setEnabled(!usernameFromUrl);
+            sshPortEditor.setEnabled(!portFromUrl);
+            setTextIfDifferent(userNameEditor, usernameFromUrl
+                    ? resolution.getUsername() : fallbackSshUsername);
+            setTextIfDifferent(sshPortEditor, portFromUrl
+                    ? String.valueOf(resolution.getPort()) : fallbackSshPort);
+            sshUsernameSource.setText(usernameFromUrl
+                    ? R.string.ssh_value_from_url : R.string.ssh_username_fallback);
+            sshPortSource.setText(portFromUrl ? R.string.ssh_value_from_url
+                    : "22".equals(fallbackSshPort) ? R.string.ssh_port_default
+                    : R.string.ssh_port_fallback);
+        } finally { renderingAuthentication = false; }
+    }
+
+    private SshConnectionResolution resolveSshConnection() {
+        Integer port = null;
+        try {
+            if (!fallbackSshPort.trim().isEmpty()) port = Integer.parseInt(fallbackSshPort.trim());
+            return SshRepositoryUri.resolve(repoUrlEditor.getText().toString().trim(),
+                    fallbackSshUsername, port);
+        } catch (Exception ignored) { return null; }
+    }
+
+    private static void setTextIfDifferent(EditText editor, String value) {
+        if (!editor.getText().toString().equals(value)) editor.setText(value);
+    }
+
+    private boolean isSshMode() {
+        return authenticationTypeGroup.getCheckedRadioButtonId() == R.id.authenticationTypeSsh;
+    }
+
+    private int sshPort() {
+        try { return Integer.parseInt(sshPortEditor.getText().toString().trim()); }
+        catch (NumberFormatException ignored) { return -1; }
+    }
+
+    private boolean hasGlobalSshKey() {
+        try {
+            return new EncryptedFileSshIdentityRepository(getApplicationContext(),
+                    ServiceLocator.getInstance().getValueEncryptor()).contains();
+        } catch (Exception ignored) { return false; }
     }
 
     public void openFolderPicker(int requestCode) {
@@ -195,12 +306,17 @@ public class EditProjectActivity extends AppCompatActivity {
         super.onResume();
     }
 
-    private void saveAndClose(String uri) {
+    void saveAndClose(String uri) {
         String rUrl = repoUrlEditor.getText().toString();
         String uName = userNameEditor.getText().toString();
         String pwd = passwordEditor.getText().toString();
 
         ProjectModel project = new ProjectModel(rUrl, uName, pwd, uri);
+        if (isSshMode()) {
+            SshConnectionResolution resolution = resolveSshConnection();
+            if (resolution == null) return;
+            project.useSshKeyAuthentication(resolution.getUsername(), resolution.getPort());
+        }
         // Add new project
         viewModel.addProject(getApplicationContext(), project);
 
@@ -238,8 +354,15 @@ public class EditProjectActivity extends AppCompatActivity {
                 String uName = userNameEditor.getText().toString();
                 String pwd = passwordEditor.getText().toString();
                 ProjectModel project = new ProjectModel(rUrl, uName, pwd, currentProjects.get(editPosition).getFolderUri());
+                if (isSshMode()) {
+                    SshConnectionResolution resolution = resolveSshConnection();
+                    if (resolution == null) return;
+                    project.useSshKeyAuthentication(resolution.getUsername(), resolution.getPort());
+                }
                 project.folderName = currentProjects.get(editPosition).getFolderName();
                 project.status = currentProjects.get(editPosition).getStatus();
+                project.lastSync = currentProjects.get(editPosition).getLastSync();
+                project.numberFiles = currentProjects.get(editPosition).getNumberFiles();
                 //currentProjects.set(editPosition, project);
                 viewModel.setProject(project, editPosition, getApplicationContext());
                 viewModel.saveProjects(getApplicationContext());
@@ -250,4 +373,5 @@ public class EditProjectActivity extends AppCompatActivity {
             openFolderPicker(REQUEST_CODE_OPEN_DIRECTORY);
         }
     }
+
 }

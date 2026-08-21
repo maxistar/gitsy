@@ -6,22 +6,41 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.Arrays;
 
 public final class SettingsActivity extends AppCompatActivity {
+    private static final int REQUEST_SSH_KEY = 41;
+    private static final int MAX_KEY_BYTES = 1024 * 1024;
     private SharedPreferencesStartupSyncSettings repository;
     private RadioGroup modeGroup;
     private RadioGroup intervalGroup;
     private TextView intervalLabel;
     private TextView explanation;
     private boolean restoring;
+    private EncryptedFileSshIdentityRepository sshIdentities;
+    private EncryptedFileSshPassphraseRepository sshPassphrases;
+    private SshIdentityImporter sshImporter;
+    private TextView sshSummary;
+    private Button sshImport;
+    private Button sshDelete;
+    private byte[] pendingPrivateKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +56,17 @@ public final class SettingsActivity extends AppCompatActivity {
         intervalGroup = findViewById(R.id.startup_sync_interval_group);
         intervalLabel = findViewById(R.id.startup_sync_interval_label);
         explanation = findViewById(R.id.startup_sync_mode_explanation);
+        sshSummary = findViewById(R.id.settings_ssh_summary);
+        sshImport = findViewById(R.id.settings_ssh_import);
+        sshDelete = findViewById(R.id.settings_ssh_delete);
+        try {
+            ValueEncryptor encryptor = ServiceLocator.getInstance().getValueEncryptor();
+            sshIdentities = new EncryptedFileSshIdentityRepository(getApplicationContext(), encryptor);
+            sshPassphrases = new EncryptedFileSshPassphraseRepository(getApplicationContext(), encryptor);
+            sshImporter = new SshIdentityImporter(new SshPrivateKeyParser(), sshIdentities, sshPassphrases);
+        } catch (Exception error) {
+            Toast.makeText(this, R.string.ssh_key_error_storage, Toast.LENGTH_LONG).show();
+        }
 
         restoring = true;
         render(repository.load());
@@ -63,6 +93,130 @@ public final class SettingsActivity extends AppCompatActivity {
                 view -> openExternalUrl(GitsyPublicLinks.DOCUMENTATION));
         findViewById(R.id.settings_terms_row).setOnClickListener(
                 view -> openExternalUrl(GitsyPublicLinks.TERMS));
+        sshImport.setOnClickListener(view -> openSshKeyDocument());
+        sshDelete.setOnClickListener(view -> confirmDeleteSshKey());
+        renderSshIdentity();
+    }
+
+    private void openSshKeyDocument() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("*/*");
+        startActivityForResult(intent, REQUEST_SSH_KEY);
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_SSH_KEY || resultCode != RESULT_OK || data == null
+                || data.getData() == null) return;
+        clearPendingKey();
+        try {
+            handleSelectedSshKey(readDocument(data.getData()));
+        } catch (SshKeyImportException error) {
+            if (error.getError() == SshKeyImportError.PASSPHRASE_REQUIRED) showPassphraseDialog();
+            else { showKeyError(error.getError()); clearPendingKey(); }
+        } catch (Exception error) {
+            Toast.makeText(this, R.string.ssh_key_error_read, Toast.LENGTH_LONG).show();
+            clearPendingKey();
+        }
+    }
+
+    void handleSelectedSshKey(byte[] privateKey) throws SshKeyImportException {
+        clearPendingKey();
+        pendingPrivateKey = privateKey.clone();
+        try {
+            new SshPrivateKeyParser().parse(pendingPrivateKey, null);
+            importPendingKey(null, false);
+        } catch (SshKeyImportException error) {
+            if (error.getError() == SshKeyImportError.PASSPHRASE_REQUIRED) {
+                showPassphraseDialog();
+                return;
+            }
+            throw error;
+        }
+    }
+
+    private void showPassphraseDialog() {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        content.setPadding(padding, 0, padding, 0);
+        EditText passphrase = new EditText(this);
+        passphrase.setHint(R.string.ssh_key_passphrase_hint);
+        passphrase.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        CheckBox retain = new CheckBox(this);
+        retain.setText(R.string.ssh_key_retain_passphrase);
+        retain.setChecked(true);
+        content.addView(passphrase); content.addView(retain);
+        new AlertDialog.Builder(this).setTitle(R.string.ssh_key_passphrase_title)
+                .setView(content)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    byte[] secret = passphrase.getText().toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    try { importPendingKey(secret, retain.isChecked()); }
+                    finally { Arrays.fill(secret, (byte) 0); }
+                })
+                .setNegativeButton(android.R.string.cancel, (dialog, which) -> clearPendingKey())
+                .setOnCancelListener(dialog -> clearPendingKey()).show();
+    }
+
+    private void importPendingKey(byte[] passphrase, boolean retain) {
+        try {
+            if (sshImporter == null || pendingPrivateKey == null) throw new IllegalStateException();
+            sshImporter.importKey(pendingPrivateKey, passphrase, retain);
+            Toast.makeText(this, R.string.ssh_key_import_success, Toast.LENGTH_SHORT).show();
+            renderSshIdentity();
+        } catch (SshKeyImportException error) {
+            showKeyError(error.getError());
+        } catch (Exception error) {
+            Toast.makeText(this, R.string.ssh_key_error_storage, Toast.LENGTH_LONG).show();
+        } finally { clearPendingKey(); }
+    }
+
+    private void showKeyError(SshKeyImportError error) {
+        int message = error == SshKeyImportError.UNSUPPORTED_ALGORITHM
+                ? R.string.ssh_key_error_unsupported
+                : error == SshKeyImportError.INCORRECT_PASSPHRASE
+                ? R.string.ssh_key_error_passphrase : R.string.ssh_key_error_malformed;
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private void renderSshIdentity() {
+        boolean available = sshIdentities != null && sshIdentities.contains();
+        sshDelete.setVisibility(available ? View.VISIBLE : View.GONE);
+        sshImport.setText(available ? R.string.ssh_key_replace : R.string.ssh_key_import);
+        if (!available) { sshSummary.setText(R.string.ssh_key_not_configured); return; }
+        try {
+            SshIdentityMetadata metadata = sshIdentities.metadata();
+            sshSummary.setText(getString(R.string.ssh_key_summary, metadata.getAlgorithm(),
+                    metadata.getKeySize(), metadata.getFingerprint()));
+        } catch (Exception error) { sshSummary.setText(R.string.ssh_key_error_storage); }
+    }
+
+    private void confirmDeleteSshKey() {
+        new AlertDialog.Builder(this).setTitle(R.string.ssh_key_delete_title)
+                .setMessage(R.string.ssh_key_delete_message)
+                .setPositiveButton(R.string.ssh_key_delete, (dialog, which) -> {
+                    try { sshImporter.deleteGlobalIdentity(); renderSshIdentity(); }
+                    catch (Exception error) { Toast.makeText(this, R.string.ssh_key_error_storage, Toast.LENGTH_LONG).show(); }
+                }).setNegativeButton(android.R.string.cancel, null).show();
+    }
+
+    private byte[] readDocument(Uri uri) throws Exception {
+        try (InputStream input = getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            if (input == null) throw new java.io.IOException();
+            byte[] buffer = new byte[8192]; int total = 0; int count;
+            while ((count = input.read(buffer)) >= 0) {
+                total += count; if (total > MAX_KEY_BYTES) throw new java.io.IOException();
+                output.write(buffer, 0, count);
+            }
+            return output.toByteArray();
+        }
+    }
+
+    private void clearPendingKey() {
+        if (pendingPrivateKey != null) Arrays.fill(pendingPrivateKey, (byte) 0);
+        pendingPrivateKey = null;
     }
 
     @Override

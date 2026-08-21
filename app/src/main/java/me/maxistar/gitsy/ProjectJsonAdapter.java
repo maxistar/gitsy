@@ -45,13 +45,17 @@ public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDes
         obj.addProperty("folderUri", src.folderUri);
         obj.addProperty("repoUrl", src.repoUrl);
         obj.addProperty("userName", src.userName);
+        obj.addProperty("authenticationType", src.authenticationType.getSerializedValue());
+        if (src.authenticationType == ProjectAuthenticationType.SSH_KEY) {
+            obj.addProperty("sshPort", src.sshPort);
+        }
         obj.addProperty("lastSync", src.lastSync);
         obj.addProperty("numberFiles", src.numberFiles);
         obj.addProperty("status", src.status);
         //obj.addProperty("password", src.password);
 
         try {
-            if (src.password != null) {
+            if (src.authenticationType == ProjectAuthenticationType.HTTPS && src.password != null) {
                 String enc = credentialCodec.encrypt(src.password, src.userName);
                 obj.addProperty("password", enc);
             } else {
@@ -73,6 +77,19 @@ public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDes
                 obj.get("folderUri").getAsString()
         );
 
+        if (obj.has("authenticationType") && !obj.get("authenticationType").isJsonNull()) {
+            try {
+                p.authenticationType = ProjectAuthenticationType.fromSerializedValue(
+                        obj.get("authenticationType").getAsString());
+            } catch (IllegalArgumentException exception) {
+                throw new JsonParseException("Unsupported project authentication type", exception);
+            }
+        }
+        if (p.authenticationType == ProjectAuthenticationType.SSH_KEY) {
+            p.sshPort = intValue(obj, "sshPort", 22);
+            p.password = null;
+        }
+
         if (obj.has("folderName") && !obj.get("folderName").isJsonNull()) {
             p.folderName = obj.get("folderName").getAsString();
         }
@@ -80,7 +97,8 @@ public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDes
         p.numberFiles = intValue(obj, "numberFiles", 0);
         p.status = intValue(obj, "status", ProjectModel.STATUS_TO_CLONE);
 
-        if (obj.has("password") && !obj.get("password").isJsonNull()) {
+        if (p.authenticationType == ProjectAuthenticationType.HTTPS
+                && obj.has("password") && !obj.get("password").isJsonNull()) {
             String blob = obj.get("password").getAsString();
             try {
                 p.password = credentialCodec.decrypt(blob, p.userName);

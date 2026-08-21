@@ -104,11 +104,7 @@ public class ProjectService extends Service {
                 },
                 currentProject -> {
                     updateNotification("Synchronization");
-                    gitService.syncRepository(
-                            getApplicationContext(),
-                            currentProject.getFolderName(),
-                            currentProject.getUserName(),
-                            currentProject.getPassword());
+                    gitService.syncRepository(getApplicationContext(), currentProject);
                 },
                 currentProject -> {
                     updateNotification("Copy changes to local folder");
@@ -123,6 +119,7 @@ public class ProjectService extends Service {
         SyncCoordinator.Result result = coordinator.synchronize(project);
         if (!result.isSuccess()) {
             Exception error = result.getError();
+            if (postSshAttention(project, error, ProjectModel.STATUS_TO_SYNC)) return;
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
@@ -139,13 +136,7 @@ public class ProjectService extends Service {
 
             updateNotification("Cloning Repo");
 
-            gitService.cloneRepository(
-                    getApplicationContext(),
-                    project.getFolderName(),
-                    project.getRepoUrl(),
-                    project.getUserName(),
-                    project.getPassword()
-            );
+            gitService.cloneRepository(getApplicationContext(), project);
 
             updateNotification("Moving Files to SAF");
 
@@ -163,6 +154,8 @@ public class ProjectService extends Service {
             project.setStatus(ProjectModel.STATUS_CLONING_ERROR);
             EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
 
+            if (postSshAttention(project, e, ProjectModel.STATUS_TO_CLONE)) return;
+
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
@@ -170,6 +163,25 @@ public class ProjectService extends Service {
             });
 
         }
+    }
+
+    private boolean postSshAttention(ProjectModel project, Exception error, int retryStatus) {
+        if (error instanceof SshHostTrustRequiredException) {
+            ServiceLocator.getInstance().publishSshAttention(SshOperationAttentionEvent.trust(project,
+                    ((SshHostTrustRequiredException) error).getRequest(), retryStatus));
+            return true;
+        }
+        if (error instanceof SshHostKeyChangedException) {
+            ServiceLocator.getInstance().publishSshAttention(
+                    SshOperationAttentionEvent.changed(project, retryStatus));
+            return true;
+        }
+        if (error instanceof SshIdentityAccessException) {
+            ServiceLocator.getInstance().publishSshAttention(
+                    SshOperationAttentionEvent.missing(project, retryStatus));
+            return true;
+        }
+        return false;
     }
 
     @SuppressLint("NotificationPermission") // Foreground-service notifications remain visible in Task Manager when notification permission is denied.

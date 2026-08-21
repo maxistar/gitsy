@@ -66,4 +66,16 @@
     <string name="settings_documentation">Документация</string>
     <string name="settings_terms">Условия использования</string>
     <string name="settings_link_error">Нет приложения для открытия этой ссылки.</string>
+    <string name="authentication_https">HTTPS</string><string name="authentication_ssh_key">SSH-ключ</string><string name="ssh_port">SSH-порт</string>
+    <string name="ssh_key_available">Глобальный SSH-ключ настроен</string><string name="ssh_key_unavailable">Сначала настройте глобальный SSH-ключ в Настройках</string>
+    <string name="settings_ssh_section">SSH-аутентификация</string><string name="ssh_key_not_configured">SSH-ключ не настроен</string><string name="ssh_key_summary">%1$s %2$d · %3$s</string>
+    <string name="ssh_key_import">Импортировать SSH-ключ</string><string name="ssh_key_replace">Заменить SSH-ключ</string><string name="ssh_key_delete">Удалить SSH-ключ</string>
+    <string name="ssh_key_delete_title">Удалить SSH-ключ?</string><string name="ssh_key_delete_message">SSH-проекты не смогут синхронизироваться, пока не будет импортирован другой ключ.</string>
+    <string name="ssh_key_passphrase_title">Зашифрованный SSH-ключ</string><string name="ssh_key_passphrase_hint">Парольная фраза</string><string name="ssh_key_retain_passphrase">Безопасно сохранить парольную фразу</string>
+    <string name="ssh_key_import_success">SSH-ключ импортирован</string><string name="ssh_key_error_malformed">Выбранный документ не является корректным приватным SSH-ключом.</string><string name="ssh_key_error_unsupported">Этот алгоритм SSH-ключа не поддерживается.</string><string name="ssh_key_error_passphrase">Неверная парольная фраза.</string><string name="ssh_key_error_storage">Не удалось безопасно сохранить SSH-ключ.</string><string name="ssh_key_error_read">Не удалось прочитать выбранный документ.</string><string name="ssh_key_settings_action">Открыть Настройки</string>
+    <string name="ssh_host_trust_title">Доверять SSH-серверу?</string><string name="ssh_host_trust_message">Хост: %1$s\nПорт: %2$d\nАлгоритм: %3$s\nОтпечаток: %4$s</string><string name="ssh_host_trust">Доверять</string><string name="ssh_host_trust_error">Не удалось сохранить идентификатор сервера.</string><string name="ssh_host_changed_title">Идентификатор SSH-сервера изменился</string><string name="ssh_host_changed_message">Синхронизация заблокирована. Проверьте отпечаток перед заменой сохранённого идентификатора.</string><string name="ssh_key_missing_title">Требуется SSH-ключ</string><string name="ssh_key_missing_message">Настройте глобальный SSH-ключ перед синхронизацией проекта.</string>
+    <string name="ssh_value_from_url">Из URL репозитория</string>
+    <string name="ssh_username_fallback">Обязательно, поскольку URL репозитория не содержит имя пользователя</string>
+    <string name="ssh_port_fallback">Используется, поскольку URL репозитория не содержит порт</string>
+    <string name="ssh_port_default">Порт по умолчанию 22; можно изменить, поскольку URL не содержит порт</string>
 </resources>
