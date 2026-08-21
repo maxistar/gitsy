@@ -24,6 +24,10 @@ public class ProjectModel {
 
     String password;
 
+    ProjectAuthenticationType authenticationType = ProjectAuthenticationType.HTTPS;
+
+    int sshPort = 22;
+
     String folderUri;
 
     long lastSync;
@@ -62,6 +66,31 @@ public class ProjectModel {
 
     public String getPassword() {
         return password;
+    }
+
+    public ProjectAuthenticationType getAuthenticationType() {
+        return authenticationType;
+    }
+
+    public int getSshPort() {
+        return sshPort;
+    }
+
+    public void useHttpsAuthentication(String userName, String password) {
+        this.authenticationType = ProjectAuthenticationType.HTTPS;
+        this.userName = userName;
+        this.password = password;
+    }
+
+    public void useSshKeyAuthentication(String userName) {
+        useSshKeyAuthentication(userName, 22);
+    }
+
+    public void useSshKeyAuthentication(String userName, int sshPort) {
+        this.authenticationType = ProjectAuthenticationType.SSH_KEY;
+        this.userName = userName;
+        this.password = null;
+        this.sshPort = sshPort;
     }
 
     public String getFolderUri() {

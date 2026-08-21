@@ -64,4 +64,16 @@
     <string name="settings_documentation">Documentazione</string>
     <string name="settings_terms">Termini e condizioni</string>
     <string name="settings_link_error">Nessuna applicazione può aprire questo collegamento.</string>
+    <string name="authentication_https">HTTPS</string><string name="authentication_ssh_key">Chiave SSH</string><string name="ssh_port">Porta SSH</string>
+    <string name="ssh_key_available">La chiave SSH globale è configurata</string><string name="ssh_key_unavailable">Configura prima la chiave SSH globale nelle Impostazioni</string>
+    <string name="settings_ssh_section">Autenticazione SSH</string><string name="ssh_key_not_configured">Nessuna chiave SSH configurata</string><string name="ssh_key_summary">%1$s %2$d · %3$s</string>
+    <string name="ssh_key_import">Importa chiave SSH</string><string name="ssh_key_replace">Sostituisci chiave SSH</string><string name="ssh_key_delete">Elimina chiave SSH</string>
+    <string name="ssh_key_delete_title">Eliminare la chiave SSH?</string><string name="ssh_key_delete_message">I progetti SSH non potranno sincronizzarsi finché non verrà importata un’altra chiave.</string>
+    <string name="ssh_key_passphrase_title">Chiave SSH cifrata</string><string name="ssh_key_passphrase_hint">Passphrase</string><string name="ssh_key_retain_passphrase">Memorizza la passphrase in modo sicuro</string>
+    <string name="ssh_key_import_success">Chiave SSH importata</string><string name="ssh_key_error_malformed">Il documento selezionato non è una chiave privata SSH valida.</string><string name="ssh_key_error_unsupported">Questo algoritmo di chiave SSH non è supportato.</string><string name="ssh_key_error_passphrase">La passphrase non è corretta.</string><string name="ssh_key_error_storage">Impossibile memorizzare la chiave SSH in modo sicuro.</string><string name="ssh_key_error_read">Impossibile leggere il documento selezionato.</string><string name="ssh_key_settings_action">Apri Impostazioni</string>
+    <string name="ssh_host_trust_title">Considerare attendibile il server SSH?</string><string name="ssh_host_trust_message">Host: %1$s\nPorta: %2$d\nAlgoritmo: %3$s\nImpronta: %4$s</string><string name="ssh_host_trust">Considera attendibile</string><string name="ssh_host_trust_error">Impossibile salvare l’identità del server.</string><string name="ssh_host_changed_title">Identità del server SSH modificata</string><string name="ssh_host_changed_message">Sincronizzazione bloccata. Verifica l’impronta prima di sostituire l’identità salvata.</string><string name="ssh_key_missing_title">Chiave SSH richiesta</string><string name="ssh_key_missing_message">Configura la chiave SSH globale nelle Impostazioni prima della sincronizzazione.</string>
+    <string name="ssh_value_from_url">Dall’URL del repository</string>
+    <string name="ssh_username_fallback">Obbligatorio perché l’URL del repository non contiene un nome utente</string>
+    <string name="ssh_port_fallback">Usata perché l’URL del repository non contiene una porta</string>
+    <string name="ssh_port_default">Porta predefinita 22; modificabile perché l’URL non contiene una porta</string>
 </resources>

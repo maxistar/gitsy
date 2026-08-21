@@ -52,6 +52,7 @@ public class ProjectJsonAdapterTest {
         assertEquals(project.repoUrl, restored.repoUrl);
         assertEquals(project.userName, restored.userName);
         assertEquals(project.password, restored.password);
+        assertEquals(ProjectAuthenticationType.HTTPS, restored.authenticationType);
         assertEquals(project.lastSync, restored.lastSync);
         assertEquals(project.numberFiles, restored.numberFiles);
         assertEquals(project.status, restored.status);
@@ -74,6 +75,62 @@ public class ProjectJsonAdapterTest {
         assertEquals(0, restored.numberFiles);
         assertEquals(ProjectModel.STATUS_TO_CLONE, restored.status);
         assertEquals("", restored.password);
+        assertEquals(ProjectAuthenticationType.HTTPS, restored.authenticationType);
+    }
+
+    @Test
+    public void sshProjectRoundTripContainsNoKeyReferenceOrSecret() {
+        ProjectModel project = new ProjectModel(
+                "ssh://git@example.invalid:2222/notes.git",
+                "git", "must-not-be-serialized", "content://test/tree/ssh");
+        project.useSshKeyAuthentication("git", 1022);
+
+        String json = gson.toJson(project);
+        ProjectModel restored = gson.fromJson(json, ProjectModel.class);
+
+        assertEquals(ProjectAuthenticationType.SSH_KEY, restored.authenticationType);
+        assertEquals(1022, restored.sshPort);
+        assertNull(restored.password);
+        assertFalse(json.contains("sshKeyId"));
+        assertFalse(json.contains("must-not-be-serialized"));
+        assertFalse(json.contains("PRIVATE KEY"));
+    }
+
+    @Test
+    public void unknownAuthenticationTypeFailsClosed() {
+        String json = "{\"folderUri\":\"content://test/tree/x\","
+                + "\"repoUrl\":\"https://example.invalid/x.git\","
+                + "\"userName\":\"user\",\"authenticationType\":\"magic\"}";
+        try {
+            gson.fromJson(json, ProjectModel.class);
+            fail("Expected unknown authentication type to fail");
+        } catch (JsonParseException expected) {
+            assertFalse(String.valueOf(expected.getMessage()).contains("PRIVATE KEY"));
+        }
+    }
+
+    @Test
+    public void sshProjectWithoutStoredPortDefaultsTo22() {
+        String json = "{\"folderUri\":\"content://test/tree/x\","
+                + "\"repoUrl\":\"git@example.invalid:maxim/x.git\","
+                + "\"userName\":\"git\",\"authenticationType\":\"ssh_key\"}";
+        assertEquals(22, gson.fromJson(json, ProjectModel.class).getSshPort());
+    }
+
+    @Test
+    public void existingMismatchedSshFallbacksRemainReadableButUrlWinsAtRuntime() throws Exception {
+        String json = "{\"folderUri\":\"content://test/tree/x\","
+                + "\"repoUrl\":\"ssh://git@example.invalid:1022/maxim/x.git\","
+                + "\"userName\":\"stale-user\",\"sshPort\":2200,"
+                + "\"authenticationType\":\"ssh_key\"}";
+        ProjectModel restored = gson.fromJson(json, ProjectModel.class);
+        assertEquals("stale-user", restored.getUserName());
+        assertEquals(2200, restored.getSshPort());
+        SshConnectionResolution effective = GitService.resolveSsh(restored);
+        assertEquals("git", effective.getUsername());
+        assertEquals(1022, effective.getPort());
+        assertEquals("ssh://git@example.invalid:1022/maxim/x.git",
+                effective.getCanonicalUri().toString());
     }
 
     @Test

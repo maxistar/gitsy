@@ -64,4 +64,16 @@
     <string name="settings_documentation">Dokumentation</string>
     <string name="settings_terms">Allgemeine Geschäftsbedingungen</string>
     <string name="settings_link_error">Keine Anwendung kann diesen Link öffnen.</string>
+    <string name="authentication_https">HTTPS</string><string name="authentication_ssh_key">SSH-Schlüssel</string><string name="ssh_port">SSH-Port</string>
+    <string name="ssh_key_available">Globaler SSH-Schlüssel ist eingerichtet</string><string name="ssh_key_unavailable">Zuerst den globalen SSH-Schlüssel in den Einstellungen einrichten</string>
+    <string name="settings_ssh_section">SSH-Authentifizierung</string><string name="ssh_key_not_configured">Kein SSH-Schlüssel eingerichtet</string><string name="ssh_key_summary">%1$s %2$d · %3$s</string>
+    <string name="ssh_key_import">SSH-Schlüssel importieren</string><string name="ssh_key_replace">SSH-Schlüssel ersetzen</string><string name="ssh_key_delete">SSH-Schlüssel löschen</string>
+    <string name="ssh_key_delete_title">SSH-Schlüssel löschen?</string><string name="ssh_key_delete_message">SSH-Projekte können erst nach dem Import eines neuen Schlüssels synchronisiert werden.</string>
+    <string name="ssh_key_passphrase_title">Verschlüsselter SSH-Schlüssel</string><string name="ssh_key_passphrase_hint">Passphrase</string><string name="ssh_key_retain_passphrase">Passphrase sicher speichern</string>
+    <string name="ssh_key_import_success">SSH-Schlüssel importiert</string><string name="ssh_key_error_malformed">Das gewählte Dokument ist kein gültiger privater SSH-Schlüssel.</string><string name="ssh_key_error_unsupported">Dieser SSH-Schlüsselalgorithmus wird nicht unterstützt.</string><string name="ssh_key_error_passphrase">Die Passphrase ist falsch.</string><string name="ssh_key_error_storage">Der SSH-Schlüssel konnte nicht sicher gespeichert werden.</string><string name="ssh_key_error_read">Das gewählte Dokument konnte nicht gelesen werden.</string><string name="ssh_key_settings_action">Einstellungen öffnen</string>
+    <string name="ssh_host_trust_title">SSH-Server vertrauen?</string><string name="ssh_host_trust_message">Host: %1$s\nPort: %2$d\nAlgorithmus: %3$s\nFingerabdruck: %4$s</string><string name="ssh_host_trust">Vertrauen</string><string name="ssh_host_trust_error">Die Serveridentität konnte nicht gespeichert werden.</string><string name="ssh_host_changed_title">SSH-Serveridentität geändert</string><string name="ssh_host_changed_message">Die Synchronisierung wurde blockiert. Prüfen Sie den Fingerabdruck, bevor Sie die gespeicherte Identität ersetzen.</string><string name="ssh_key_missing_title">SSH-Schlüssel erforderlich</string><string name="ssh_key_missing_message">Richten Sie den globalen SSH-Schlüssel vor der Synchronisierung in den Einstellungen ein.</string>
+    <string name="ssh_value_from_url">Aus der Repository-URL</string>
+    <string name="ssh_username_fallback">Erforderlich, da die Repository-URL keinen Benutzernamen enthält</string>
+    <string name="ssh_port_fallback">Wird verwendet, da die Repository-URL keinen Port enthält</string>
+    <string name="ssh_port_default">Standardport 22; bearbeitbar, da die Repository-URL keinen Port enthält</string>
 </resources>

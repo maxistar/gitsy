@@ -65,5 +65,37 @@
     <string name="settings_documentation">Documentation</string>
     <string name="settings_terms">Terms and conditions</string>
     <string name="settings_link_error">No application can open this link.</string>
+    <string name="authentication_https">HTTPS</string>
+    <string name="authentication_ssh_key">SSH key</string>
+    <string name="ssh_port">SSH port</string>
+    <string name="ssh_value_from_url">From repository URL</string>
+    <string name="ssh_username_fallback">Required because the repository URL has no username</string>
+    <string name="ssh_port_fallback">Used because the repository URL has no port</string>
+    <string name="ssh_port_default">Default port 22; editable because the repository URL has no port</string>
+    <string name="ssh_key_available">Global SSH key is configured</string>
+    <string name="ssh_key_unavailable">Configure the global SSH key in Settings first</string>
+    <string name="settings_ssh_section">SSH authentication</string>
+    <string name="ssh_key_not_configured">No SSH key configured</string>
+    <string name="ssh_key_summary">%1$s %2$d · %3$s</string>
+    <string name="ssh_key_import">Import SSH key</string>
+    <string name="ssh_key_replace">Replace SSH key</string>
+    <string name="ssh_key_delete">Delete SSH key</string>
+    <string name="ssh_key_delete_title">Delete SSH key?</string>
+    <string name="ssh_key_delete_message">SSH projects cannot synchronize until another key is imported.</string>
+    <string name="ssh_key_passphrase_title">Encrypted SSH key</string>
+    <string name="ssh_key_passphrase_hint">Passphrase</string>
+    <string name="ssh_key_retain_passphrase">Store passphrase securely</string>
+    <string name="ssh_key_import_success">SSH key imported</string>
+    <string name="ssh_key_error_malformed">The selected document is not a valid SSH private key.</string>
+    <string name="ssh_key_error_unsupported">This SSH key algorithm is not supported.</string>
+    <string name="ssh_key_error_passphrase">The passphrase is incorrect.</string>
+    <string name="ssh_key_error_storage">The SSH key could not be stored securely.</string>
+    <string name="ssh_key_error_read">The selected document could not be read.</string>
+    <string name="ssh_key_settings_action">Open Settings</string>
+    <string name="ssh_host_trust_title">Trust SSH server?</string>
+    <string name="ssh_host_trust_message">Host: %1$s\nPort: %2$d\nAlgorithm: %3$s\nFingerprint: %4$s</string>
+    <string name="ssh_host_trust">Trust</string><string name="ssh_host_trust_error">The server identity could not be saved.</string>
+    <string name="ssh_host_changed_title">SSH server identity changed</string><string name="ssh_host_changed_message">Synchronization was blocked. Review the server fingerprint before replacing its saved identity.</string>
+    <string name="ssh_key_missing_title">SSH key required</string><string name="ssh_key_missing_message">Configure or replace the global SSH key in Settings before synchronizing this project.</string>
 
 </resources>

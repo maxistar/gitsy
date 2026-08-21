@@ -16,7 +16,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-public class ValueEncryptor {
+public class ValueEncryptor implements SshSecretCipher {
 
     private static final String ANDROID_KEYSTORE = "AndroidKeyStore";
     private static final String KEY_ALIAS = "value_encryptor_v1"; // уникален в рамках приложения
@@ -61,6 +61,11 @@ public class ValueEncryptor {
 
     /** Шифрует строку. Возвращает blob "v1:Base64(iv):Base64(ciphertext)". AAD необязателен. */
     public String encryptValue(String plaintext, @Nullable String aad) throws Exception {
+        return encrypt(plaintext.getBytes(StandardCharsets.UTF_8), aad);
+    }
+
+    @Override
+    public String encrypt(byte[] plaintext, @Nullable String aad) throws Exception {
         SecretKey key = getKey();
 
         Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORM);
@@ -69,7 +74,7 @@ public class ValueEncryptor {
             cipher.updateAAD(aad.getBytes(StandardCharsets.UTF_8));
         }
 
-        byte[] ct = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+        byte[] ct = cipher.doFinal(plaintext);
         byte[] iv = cipher.getIV();
 
         String ivB64 = Base64.encodeToString(iv, Base64.NO_WRAP);
@@ -79,6 +84,11 @@ public class ValueEncryptor {
 
     /** Расшифровывает blob "v1:Base64(iv):Base64(ciphertext)". AAD должен совпадать с тем, что был при шифровании. */
     public String decryptValue(String blob, @Nullable String aad) throws Exception {
+        return new String(decrypt(blob, aad), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public byte[] decrypt(String blob, @Nullable String aad) throws Exception {
         String[] parts = blob.split(":", 3);
         if (parts.length != 3 || !"v1".equals(parts[0])) {
             throw new IllegalArgumentException("Unsupported blob format/version");
@@ -93,8 +103,7 @@ public class ValueEncryptor {
             cipher.updateAAD(aad.getBytes(StandardCharsets.UTF_8));
         }
 
-        byte[] pt = cipher.doFinal(ct);
-        return new String(pt, StandardCharsets.UTF_8);
+        return cipher.doFinal(ct);
     }
 
 }

@@ -35,6 +35,9 @@ public class MainActivity extends AppCompatActivity implements
     private View emptyView;
     private StartupSyncSession startupSyncSession;
     private SharedPreferencesStartupSyncSettings startupSettingsRepository;
+    private SshOperationAttentionEvent displayedSshAttention;
+    private final EventBus.EventListener<SshOperationAttentionEvent> sshAttentionListener =
+            event -> runOnUiThread(() -> showSshAttention(event));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements
                 });
             }
         });
+        EventBus.getInstance().subscribe(SshOperationAttentionEvent.class, sshAttentionListener);
 
 
 
@@ -103,6 +107,60 @@ public class MainActivity extends AppCompatActivity implements
         // } catch (Exception e) {
         //     e.printStackTrace();
         // }
+    }
+
+    @Override protected void onDestroy() {
+        EventBus.getInstance().unsubscribe(SshOperationAttentionEvent.class, sshAttentionListener);
+        super.onDestroy();
+    }
+
+    private void showSshAttention(SshOperationAttentionEvent event) {
+        if (isFinishing() || isDestroyed()) return;
+        if (displayedSshAttention == event) return;
+        displayedSshAttention = event;
+        if (event.getType() == SshOperationAttentionEvent.Type.TRUST_REQUIRED) {
+            SshHostTrustRequest request = event.getTrustRequest();
+            new AlertDialog.Builder(this).setTitle(R.string.ssh_host_trust_title)
+                    .setMessage(getString(R.string.ssh_host_trust_message, request.getHost(),
+                            request.getPort(), request.getAlgorithm(), request.getFingerprint()))
+                    .setPositiveButton(R.string.ssh_host_trust, (dialog, which) -> {
+                        try {
+                            if (ServiceLocator.getInstance().acceptSshHost(
+                                    getApplicationContext(), request.getToken())) {
+                                ServiceLocator.getInstance().clearPendingSshAttention(event);
+                                displayedSshAttention = null;
+                                event.getProject().setStatus(event.getRetryStatus());
+                                viewModel.saveProjects(getApplicationContext());
+                                startService(new Intent(this, ProjectService.class));
+                            }
+                        } catch (Exception error) {
+                            android.widget.Toast.makeText(this, R.string.ssh_host_trust_error,
+                                    android.widget.Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                        ServiceLocator.getInstance().declineSshHost(
+                                getApplicationContext(), request.getToken());
+                        ServiceLocator.getInstance().clearPendingSshAttention(event);
+                        displayedSshAttention = null;
+                    })
+                    .setCancelable(false).show();
+            return;
+        }
+        int title = event.getType() == SshOperationAttentionEvent.Type.HOST_CHANGED
+                ? R.string.ssh_host_changed_title : R.string.ssh_key_missing_title;
+        int message = event.getType() == SshOperationAttentionEvent.Type.HOST_CHANGED
+                ? R.string.ssh_host_changed_message : R.string.ssh_key_missing_message;
+        new AlertDialog.Builder(this).setTitle(title).setMessage(message)
+                .setPositiveButton(R.string.ssh_key_settings_action, (dialog, which) -> {
+                    ServiceLocator.getInstance().clearPendingSshAttention(event);
+                    displayedSshAttention = null;
+                    startActivity(new Intent(this, SettingsActivity.class));
+                })
+                .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
+                    ServiceLocator.getInstance().clearPendingSshAttention(event);
+                    displayedSshAttention = null;
+                }).show();
     }
 
     private void handleStartupDecision(StartupSyncSession.Decision decision) {
@@ -136,6 +194,9 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
+        displayedSshAttention = null;
+        SshOperationAttentionEvent pending = ServiceLocator.getInstance().getPendingSshAttention();
+        if (pending != null) showSshAttention(pending);
         viewModel.updateProjects();
         adapter.notifyDataSetChanged();
     }
