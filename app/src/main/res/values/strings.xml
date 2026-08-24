@@ -97,5 +97,10 @@
     <string name="ssh_host_trust">Trust</string><string name="ssh_host_trust_error">The server identity could not be saved.</string>
     <string name="ssh_host_changed_title">SSH server identity changed</string><string name="ssh_host_changed_message">Synchronization was blocked. Review the server fingerprint before replacing its saved identity.</string>
     <string name="ssh_key_missing_title">SSH key required</string><string name="ssh_key_missing_message">Configure or replace the global SSH key in Settings before synchronizing this project.</string>
+    <string name="https_clone_authentication_error">Authentication failed. Check the HTTPS username and token, then retry.</string>
+    <string name="clone_failed_sanitized">The repository could not be cloned. Check the project settings and connection.</string>
+    <string name="check_credentials">Check credentials</string>
+    <string name="credential_recovery_guidance">The repository rejected these HTTPS credentials. Check the username and token; saving will retry the clone.</string>
+    <string name="save_and_retry">Save and retry</string>
 
 </resources>

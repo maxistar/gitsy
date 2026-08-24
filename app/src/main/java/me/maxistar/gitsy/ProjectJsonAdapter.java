@@ -52,6 +52,10 @@ public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDes
         obj.addProperty("lastSync", src.lastSync);
         obj.addProperty("numberFiles", src.numberFiles);
         obj.addProperty("status", src.status);
+        if (src.cloneFailureCategory != CloneFailureCategory.NONE) {
+            obj.addProperty("cloneFailureCategory",
+                    src.cloneFailureCategory.getSerializedValue());
+        }
         //obj.addProperty("password", src.password);
 
         try {
@@ -96,6 +100,11 @@ public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDes
         p.lastSync = longValue(obj, "lastSync", 0L);
         p.numberFiles = intValue(obj, "numberFiles", 0);
         p.status = intValue(obj, "status", ProjectModel.STATUS_TO_CLONE);
+        p.cloneFailureCategory = obj.has("cloneFailureCategory")
+                && !obj.get("cloneFailureCategory").isJsonNull()
+                ? CloneFailureCategory.fromSerializedValue(
+                        obj.get("cloneFailureCategory").getAsString())
+                : CloneFailureCategory.NONE;
 
         if (p.authenticationType == ProjectAuthenticationType.HTTPS
                 && obj.has("password") && !obj.get("password").isJsonNull()) {

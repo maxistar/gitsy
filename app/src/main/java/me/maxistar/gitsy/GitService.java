@@ -16,9 +16,32 @@ public class GitService {
 
     public void cloneRepository(Context context, ProjectModel project) throws Exception {
         Log.d(TAG, "Start Clone Repo");
-        cloneRepository(new File(context.getFilesDir(), project.getFolderName()), project,
+        cloneRepositoryInRoot(context.getFilesDir(), project,
                 ServiceLocator.getInstance().getTransportAuthenticationFactory(context));
         Log.d(TAG, "Stop Clone Repo");
+    }
+
+    void cloneRepositoryInRoot(File filesRoot, ProjectModel project,
+                         ProjectTransportAuthenticationFactory authenticationFactory) throws Exception {
+        CloneWorkspace workspace = new CloneWorkspace(filesRoot, project.getFolderName());
+        File staging = null;
+        try {
+            staging = workspace.begin(UUID.randomUUID().toString());
+            cloneRepository(staging, project, authenticationFactory);
+            workspace.promote(staging);
+            staging = null;
+        } catch (Exception error) {
+            if (staging != null) {
+                try { workspace.discard(staging); }
+                catch (Exception cleanup) { error.addSuppressed(cleanup); }
+            }
+            if (project.getAuthenticationType() == ProjectAuthenticationType.HTTPS
+                    && !(error instanceof HttpsCloneException)) {
+                throw new HttpsCloneException(
+                        new HttpsCloneFailureTranslator().translate(error), error);
+            }
+            throw error;
+        }
     }
 
     public void syncRepository(Context context, ProjectModel project) throws Exception {

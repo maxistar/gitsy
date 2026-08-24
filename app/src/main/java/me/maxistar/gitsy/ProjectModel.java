@@ -36,6 +36,8 @@ public class ProjectModel {
 
     int status = STATUS_TO_CLONE;
 
+    CloneFailureCategory cloneFailureCategory = CloneFailureCategory.NONE;
+
     public long getLastSync() {
         return lastSync;
     }
@@ -103,6 +105,15 @@ public class ProjectModel {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public CloneFailureCategory getCloneFailureCategory() {
+        return cloneFailureCategory;
+    }
+
+    public void setCloneFailureCategory(CloneFailureCategory cloneFailureCategory) {
+        this.cloneFailureCategory = cloneFailureCategory == null
+                ? CloneFailureCategory.NONE : cloneFailureCategory;
     }
 
     public int getNumberFiles() {

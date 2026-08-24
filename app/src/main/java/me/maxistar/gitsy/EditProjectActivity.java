@@ -25,6 +25,7 @@ import java.util.List;
 public class EditProjectActivity extends AppCompatActivity {
 
     public static final String TAG = "GitSyDebug";
+    public static final String EXTRA_AUTHENTICATION_RECOVERY = "authenticationRecovery";
     EditText repoUrlEditor;
 
     EditText userNameEditor;
@@ -42,6 +43,7 @@ public class EditProjectActivity extends AppCompatActivity {
     private String fallbackSshUsername = "";
     private String fallbackSshPort = "22";
     private boolean renderingAuthentication;
+    private boolean authenticationRecovery;
 
     private static final int REQUEST_CODE_OPEN_DIRECTORY = 1;
 
@@ -83,6 +85,11 @@ public class EditProjectActivity extends AppCompatActivity {
                 // Load the project to edit
                 ProjectModel project = viewModel.getProjects().getValue().get(editPosition);
                 if (project != null) {
+                    authenticationRecovery = intent.getBooleanExtra(
+                            EXTRA_AUTHENTICATION_RECOVERY, false)
+                            && project.getAuthenticationType() == ProjectAuthenticationType.HTTPS
+                            && project.getCloneFailureCategory()
+                            == CloneFailureCategory.AUTHENTICATION;
                     repoUrlEditor.setText(project.getRepoUrl());
                     userNameEditor.setText(project.getUserName());
                     passwordEditor.setText(project.getPassword());
@@ -93,7 +100,10 @@ public class EditProjectActivity extends AppCompatActivity {
                         sshPortEditor.setText(String.valueOf(project.getSshPort()));
                     }
                     // Update the button text to indicate we're editing
-                    saveButton.setText(R.string.update_project);
+                    saveButton.setText(authenticationRecovery
+                            ? R.string.save_and_retry : R.string.update_project);
+                    findViewById(R.id.credentialRecoveryGuidance).setVisibility(
+                            authenticationRecovery ? View.VISIBLE : View.GONE);
                     setTitle(R.string.edit_project_title);
                 }
             }
@@ -361,12 +371,21 @@ public class EditProjectActivity extends AppCompatActivity {
                 }
                 project.folderName = currentProjects.get(editPosition).getFolderName();
                 project.status = currentProjects.get(editPosition).getStatus();
+                project.cloneFailureCategory = currentProjects.get(editPosition)
+                        .getCloneFailureCategory();
                 project.lastSync = currentProjects.get(editPosition).getLastSync();
                 project.numberFiles = currentProjects.get(editPosition).getNumberFiles();
+                if (authenticationRecovery) {
+                    project.setCloneFailureCategory(CloneFailureCategory.NONE);
+                    project.setStatus(ProjectModel.STATUS_TO_CLONE);
+                }
                 //currentProjects.set(editPosition, project);
                 viewModel.setProject(project, editPosition, getApplicationContext());
                 viewModel.saveProjects(getApplicationContext());
                 viewModel.updateProjects();
+                if (authenticationRecovery) {
+                    startService(new Intent(this, ProjectService.class));
+                }
             }
             finish();
         } else {

@@ -130,39 +130,40 @@ public class ProjectService extends Service {
     }
 
     private void cloneProject(ProjectModel project) {
-        try {
-            project.setStatus(ProjectModel.STATUS_CLONING);
-            EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
-
-            updateNotification("Cloning Repo");
-
-            gitService.cloneRepository(getApplicationContext(), project);
-
-            updateNotification("Moving Files to SAF");
-
-            int totalFiles = fileStorageService.copyToSaf(
-                    getApplicationContext(),
-                    project.getFolderName(),
-                    Uri.parse(project.getFolderUri())
-            );
-
-            project.setStatus(ProjectModel.STATUS_READY);
-            project.setNumberFiles(totalFiles);
-            project.setLastSync(System.currentTimeMillis());
-            EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
-        } catch (Exception e) {
-            project.setStatus(ProjectModel.STATUS_CLONING_ERROR);
-            EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!"));
-
+        CloneCoordinator coordinator = new CloneCoordinator(
+                current -> {
+                    updateNotification("Cloning Repo");
+                    gitService.cloneRepository(getApplicationContext(), current);
+                },
+                current -> {
+                    updateNotification("Moving Files to SAF");
+                    return fileStorageService.copyToSaf(getApplicationContext(),
+                            current.getFolderName(), Uri.parse(current.getFolderUri()));
+                },
+                System::currentTimeMillis,
+                current -> persistAndNotify());
+        CloneCoordinator.Result result = coordinator.clone(project);
+        if (!result.isSuccess()) {
+            Exception e = result.getError();
             if (postSshAttention(project, e, ProjectModel.STATUS_TO_CLONE)) return;
 
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();                }
+                    int message = e instanceof HttpsCloneException
+                            && ((HttpsCloneException) e).getCategory()
+                            == CloneFailureCategory.AUTHENTICATION
+                            ? R.string.https_clone_authentication_error
+                            : R.string.clone_failed_sanitized;
+                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                }
             });
-
         }
+    }
+
+    private void persistAndNotify() {
+        ProjectRepository.getInstance().saveProjects(getApplicationContext());
+        EventBus.getInstance().post(new UpdateListEvent("project state changed"));
     }
 
     private boolean postSshAttention(ProjectModel project, Exception error, int retryStatus) {

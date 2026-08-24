@@ -76,4 +76,9 @@
     <string name="ssh_username_fallback">Obbligatorio perché l’URL del repository non contiene un nome utente</string>
     <string name="ssh_port_fallback">Usata perché l’URL del repository non contiene una porta</string>
     <string name="ssh_port_default">Porta predefinita 22; modificabile perché l’URL non contiene una porta</string>
+    <string name="https_clone_authentication_error">Autenticazione non riuscita. Controlla nome utente e token HTTPS, quindi riprova.</string>
+    <string name="clone_failed_sanitized">Impossibile clonare il repository. Controlla impostazioni del progetto e connessione.</string>
+    <string name="check_credentials">Controlla credenziali</string>
+    <string name="credential_recovery_guidance">Il repository ha rifiutato queste credenziali HTTPS. Controlla nome utente e token; il salvataggio riproverà la clonazione.</string>
+    <string name="save_and_retry">Salva e riprova</string>
 </resources>

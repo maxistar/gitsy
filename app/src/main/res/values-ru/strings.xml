@@ -78,4 +78,9 @@
     <string name="ssh_username_fallback">Обязательно, поскольку URL репозитория не содержит имя пользователя</string>
     <string name="ssh_port_fallback">Используется, поскольку URL репозитория не содержит порт</string>
     <string name="ssh_port_default">Порт по умолчанию 22; можно изменить, поскольку URL не содержит порт</string>
+    <string name="https_clone_authentication_error">Ошибка авторизации. Проверьте имя пользователя и HTTPS-токен, затем повторите попытку.</string>
+    <string name="clone_failed_sanitized">Не удалось клонировать репозиторий. Проверьте настройки проекта и соединение.</string>
+    <string name="check_credentials">Проверить данные входа</string>
+    <string name="credential_recovery_guidance">Репозиторий отклонил эти HTTPS-данные. Проверьте имя пользователя и токен; после сохранения клонирование повторится.</string>
+    <string name="save_and_retry">Сохранить и повторить</string>
 </resources>

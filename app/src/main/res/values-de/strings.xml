@@ -76,4 +76,9 @@
     <string name="ssh_username_fallback">Erforderlich, da die Repository-URL keinen Benutzernamen enthält</string>
     <string name="ssh_port_fallback">Wird verwendet, da die Repository-URL keinen Port enthält</string>
     <string name="ssh_port_default">Standardport 22; bearbeitbar, da die Repository-URL keinen Port enthält</string>
+    <string name="https_clone_authentication_error">Authentifizierung fehlgeschlagen. HTTPS-Benutzernamen und Token prüfen und erneut versuchen.</string>
+    <string name="clone_failed_sanitized">Das Repository konnte nicht geklont werden. Projekteinstellungen und Verbindung prüfen.</string>
+    <string name="check_credentials">Zugangsdaten prüfen</string>
+    <string name="credential_recovery_guidance">Das Repository hat diese HTTPS-Zugangsdaten abgelehnt. Benutzername und Token prüfen; Speichern startet den Klon erneut.</string>
+    <string name="save_and_retry">Speichern und erneut versuchen</string>
 </resources>
