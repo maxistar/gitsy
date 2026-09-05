@@ -44,11 +44,12 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
     public void onBindViewHolder(@NonNull ProjectViewHolder holder, int position) {
         ProjectModel project = projectList.get(position);
         holder.textView.setText(project.getRepoUrl());
-        holder.statusView.setText(statusToString(project.getStatus()));
+        holder.statusView.setText(statusToString(holder.itemView, project));
         String lastChanges = formatLastSync(project.getLastSync());
         holder.filesView.setText("files: " + project.getNumberFiles() + lastChanges);
         boolean authenticationFailure = project.getAuthenticationType() == ProjectAuthenticationType.HTTPS
-                && project.getCloneFailureCategory() == CloneFailureCategory.AUTHENTICATION;
+                && (project.getCloneFailureCategory() == CloneFailureCategory.AUTHENTICATION
+                || project.getSyncFailureCategory() == SyncFailureCategory.AUTHENTICATION);
         holder.checkCredentials.setVisibility(authenticationFailure ? View.VISIBLE : View.GONE);
     }
 
@@ -66,7 +67,21 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
 
     }
 
-    private String statusToString(int status) {
+    private String statusToString(View view, ProjectModel project) {
+        SyncFailureCategory failure = project.getSyncFailureCategory();
+        if (failure != SyncFailureCategory.NONE) {
+            int message = failure == SyncFailureCategory.TRANSIENT
+                    ? R.string.scheduled_sync_failure_transient
+                    : failure == SyncFailureCategory.AUTHENTICATION
+                    ? R.string.scheduled_sync_failure_authentication
+                    : failure == SyncFailureCategory.SSH_ATTENTION
+                    ? R.string.scheduled_sync_failure_ssh
+                    : failure == SyncFailureCategory.FOLDER_ACCESS
+                    ? R.string.scheduled_sync_failure_folder
+                    : R.string.scheduled_sync_failure_attention;
+            return view.getContext().getString(message);
+        }
+        int status = project.getStatus();
         if (status == ProjectModel.STATUS_READY) {
             return " ready";
         } else if (status == ProjectModel.STATUS_TO_CLONE) {

@@ -81,4 +81,21 @@
     <string name="check_credentials">Controlla credenziali</string>
     <string name="credential_recovery_guidance">Il repository ha rifiutato queste credenziali HTTPS. Controlla nome utente e token; il salvataggio riproverà la clonazione.</string>
     <string name="save_and_retry">Salva e riprova</string>
+    <string name="scheduled_sync_settings_title">Sincronizzazione giornaliera in background</string>
+    <string name="scheduled_sync_enable">Sincronizza i progetti ogni giorno</string>
+    <string name="scheduled_sync_time">Ora: %1$s</string>
+    <string name="scheduled_sync_next">Prossimo tentativo verso %1$s</string>
+    <string name="scheduled_sync_explanation">Android esegue il lavoro in background quando possibile e può avviarlo dopo l’ora selezionata. È necessaria una connessione di rete.</string>
+    <string name="scheduled_sync_notification_denied">Le notifiche sono disattivate. La sincronizzazione pianificata resta attiva, ma il lavoro in corso potrebbe essere meno visibile. Controlla le impostazioni delle notifiche.</string>
+    <string name="scheduled_sync_channel">Sincronizzazione pianificata</string>
+    <string name="scheduled_sync_title">Sincronizzazione pianificata GitSy</string>
+    <string name="scheduled_sync_running">Preparazione della sincronizzazione…</string>
+    <string name="scheduled_sync_importing">Importazione delle modifiche locali…</string>
+    <string name="scheduled_sync_synchronizing">Sincronizzazione del repository…</string>
+    <string name="scheduled_sync_exporting">Esportazione dei file sincronizzati…</string>
+    <string name="scheduled_sync_failure_transient">Sincronizzazione non riuscita; sarà di nuovo disponibile domani</string>
+    <string name="scheduled_sync_failure_authentication">La sincronizzazione richiede credenziali aggiornate</string>
+    <string name="scheduled_sync_failure_ssh">La sincronizzazione richiede attenzione SSH</string>
+    <string name="scheduled_sync_failure_folder">La sincronizzazione richiede l’accesso alla cartella</string>
+    <string name="scheduled_sync_failure_attention">La sincronizzazione richiede attenzione</string>
 </resources>

@@ -13,6 +13,7 @@ public class ServiceLocator {
     private SshIdentityMaterialLoader sshIdentityMaterialLoader;
     private SshHostTrustCoordinator sshHostTrustCoordinator;
     private SshOperationAttentionEvent pendingSshAttention;
+    private final ProjectExecutionGate projectExecutionGate = new ProjectExecutionGate();
 
     public static ServiceLocator getInstance() {
         if (instance == null) {
@@ -41,6 +42,8 @@ public class ServiceLocator {
     public StartupSyncSession getStartupSyncSession() {
         return startupSyncSession;
     }
+
+    ProjectExecutionGate getProjectExecutionGate() { return projectExecutionGate; }
 
     public synchronized ProjectTransportAuthenticationFactory getTransportAuthenticationFactory(
             android.content.Context context) throws Exception {

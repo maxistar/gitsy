@@ -103,4 +103,21 @@
     <string name="credential_recovery_guidance">The repository rejected these HTTPS credentials. Check the username and token; saving will retry the clone.</string>
     <string name="save_and_retry">Save and retry</string>
 
+    <string name="scheduled_sync_settings_title">Daily background synchronization</string>
+    <string name="scheduled_sync_enable">Synchronize projects daily</string>
+    <string name="scheduled_sync_time">Time: %1$s</string>
+    <string name="scheduled_sync_next">Next attempt around %1$s</string>
+    <string name="scheduled_sync_explanation">Android runs background work on a best-effort basis and may start it later than the selected time. A connected network is required.</string>
+    <string name="scheduled_sync_notification_denied">Notifications are disabled. Scheduled sync remains enabled, but running work may be less visible. Review notification settings.</string>
+    <string name="scheduled_sync_channel">Scheduled synchronization</string>
+    <string name="scheduled_sync_title">GitSy scheduled synchronization</string>
+    <string name="scheduled_sync_running">Preparing synchronization…</string>
+    <string name="scheduled_sync_importing">Importing local changes…</string>
+    <string name="scheduled_sync_synchronizing">Synchronizing repository…</string>
+    <string name="scheduled_sync_exporting">Exporting synchronized files…</string>
+    <string name="scheduled_sync_failure_transient">Synchronization failed; it will be eligible again tomorrow</string>
+    <string name="scheduled_sync_failure_authentication">Synchronization needs updated credentials</string>
+    <string name="scheduled_sync_failure_ssh">Synchronization needs SSH attention</string>
+    <string name="scheduled_sync_failure_folder">Synchronization needs folder access</string>
+    <string name="scheduled_sync_failure_attention">Synchronization needs attention</string>
 </resources>

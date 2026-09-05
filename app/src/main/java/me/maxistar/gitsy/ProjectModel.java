@@ -38,6 +38,8 @@ public class ProjectModel {
 
     CloneFailureCategory cloneFailureCategory = CloneFailureCategory.NONE;
 
+    SyncFailureCategory syncFailureCategory = SyncFailureCategory.NONE;
+
     public long getLastSync() {
         return lastSync;
     }
@@ -114,6 +116,12 @@ public class ProjectModel {
     public void setCloneFailureCategory(CloneFailureCategory cloneFailureCategory) {
         this.cloneFailureCategory = cloneFailureCategory == null
                 ? CloneFailureCategory.NONE : cloneFailureCategory;
+    }
+
+    public SyncFailureCategory getSyncFailureCategory() { return syncFailureCategory; }
+
+    public void setSyncFailureCategory(SyncFailureCategory category) {
+        syncFailureCategory = category == null ? SyncFailureCategory.NONE : category;
     }
 
     public int getNumberFiles() {

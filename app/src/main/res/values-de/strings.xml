@@ -81,4 +81,21 @@
     <string name="check_credentials">Zugangsdaten prüfen</string>
     <string name="credential_recovery_guidance">Das Repository hat diese HTTPS-Zugangsdaten abgelehnt. Benutzername und Token prüfen; Speichern startet den Klon erneut.</string>
     <string name="save_and_retry">Speichern und erneut versuchen</string>
+    <string name="scheduled_sync_settings_title">Tägliche Hintergrundsynchronisierung</string>
+    <string name="scheduled_sync_enable">Projekte täglich synchronisieren</string>
+    <string name="scheduled_sync_time">Uhrzeit: %1$s</string>
+    <string name="scheduled_sync_next">Nächster Versuch gegen %1$s</string>
+    <string name="scheduled_sync_explanation">Android führt Hintergrundarbeit nach Möglichkeit aus und kann später als ausgewählt starten. Eine Netzwerkverbindung ist erforderlich.</string>
+    <string name="scheduled_sync_notification_denied">Benachrichtigungen sind deaktiviert. Die geplante Synchronisierung bleibt aktiv, laufende Arbeit ist aber eventuell weniger sichtbar. Benachrichtigungseinstellungen prüfen.</string>
+    <string name="scheduled_sync_channel">Geplante Synchronisierung</string>
+    <string name="scheduled_sync_title">Geplante GitSy-Synchronisierung</string>
+    <string name="scheduled_sync_running">Synchronisierung wird vorbereitet…</string>
+    <string name="scheduled_sync_importing">Lokale Änderungen werden importiert…</string>
+    <string name="scheduled_sync_synchronizing">Repository wird synchronisiert…</string>
+    <string name="scheduled_sync_exporting">Synchronisierte Dateien werden exportiert…</string>
+    <string name="scheduled_sync_failure_transient">Synchronisierung fehlgeschlagen; morgen ist ein neuer Versuch möglich</string>
+    <string name="scheduled_sync_failure_authentication">Für die Synchronisierung sind neue Zugangsdaten nötig</string>
+    <string name="scheduled_sync_failure_ssh">Die Synchronisierung benötigt SSH-Eingabe</string>
+    <string name="scheduled_sync_failure_folder">Die Synchronisierung benötigt Ordnerzugriff</string>
+    <string name="scheduled_sync_failure_attention">Die Synchronisierung benötigt Aufmerksamkeit</string>
 </resources>

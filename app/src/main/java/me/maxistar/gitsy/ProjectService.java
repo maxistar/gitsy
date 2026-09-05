@@ -74,49 +74,35 @@ public class ProjectService extends Service {
     private void performTaskAndUpdateNotification() {
         started = true;
         new Thread(() -> {
-            ProjectRepository repository = ProjectRepository.getInstance();
-            List<ProjectModel> projects = repository.getProjects();
+            try {
+                ProjectRepository repository = ProjectRepository.getInstance();
+                List<ProjectModel> projects = repository.getProjects();
+                ProjectExecutionGate gate = ServiceLocator.getInstance().getProjectExecutionGate();
 
-            for (ProjectModel project : projects) {
-                if (project.getStatus() == ProjectModel.STATUS_TO_CLONE) {
-                    cloneProject(project);
+                for (ProjectModel project : projects) {
+                    if (!gate.tryAcquire(project.getFolderName())) continue;
+                    try {
+                        if (project.getStatus() == ProjectModel.STATUS_TO_CLONE) cloneProject(project);
+                        if (project.getStatus() == ProjectModel.STATUS_TO_SYNC) syncProject(project);
+                    } finally {
+                        gate.release(project.getFolderName());
+                    }
                 }
-                if (project.getStatus() == ProjectModel.STATUS_TO_SYNC) {
-                    syncProject(project);
-                }
+            } finally {
+                stopSelf();
+                ServiceLocator.getInstance().getWakeLockService().releaseLock();
+                started = false;
             }
-
-
-            stopSelf();
-            ServiceLocator.getInstance().getWakeLockService().releaseLock();
-            started = false;
         }).start();
     }
 
     private void syncProject(ProjectModel project) {
-        SyncCoordinator coordinator = new SyncCoordinator(
-                currentProject -> {
-                    updateNotification("Copy changes to git");
-                    fileStorageService.copyFromSaf(
-                            getApplicationContext(),
-                            Uri.parse(currentProject.getFolderUri()),
-                            currentProject.getFolderName());
-                },
-                currentProject -> {
-                    updateNotification("Synchronization");
-                    gitService.syncRepository(getApplicationContext(), currentProject);
-                },
-                currentProject -> {
-                    updateNotification("Copy changes to local folder");
-                    fileStorageService.copyToSaf(
-                            getApplicationContext(),
-                            currentProject.getFolderName(),
-                            Uri.parse(currentProject.getFolderUri()));
-                },
-                System::currentTimeMillis,
-                currentProject -> EventBus.getInstance().post(new UpdateListEvent("Hello, EventBus!")));
-
-        SyncCoordinator.Result result = coordinator.synchronize(project);
+        ProjectSyncRunner.Result result = new ProjectSyncRunner(getApplicationContext())
+                .synchronize(project, phase -> {
+                    if (phase == ProjectSyncRunner.Phase.IMPORT) updateNotification("Copy changes to git");
+                    else if (phase == ProjectSyncRunner.Phase.GIT) updateNotification("Synchronization");
+                    else updateNotification("Copy changes to local folder");
+                });
         if (!result.isSuccess()) {
             Exception error = result.getError();
             if (postSshAttention(project, error, ProjectModel.STATUS_TO_SYNC)) return;

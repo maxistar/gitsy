@@ -83,4 +83,21 @@
     <string name="check_credentials">Проверить данные входа</string>
     <string name="credential_recovery_guidance">Репозиторий отклонил эти HTTPS-данные. Проверьте имя пользователя и токен; после сохранения клонирование повторится.</string>
     <string name="save_and_retry">Сохранить и повторить</string>
+    <string name="scheduled_sync_settings_title">Ежедневная фоновая синхронизация</string>
+    <string name="scheduled_sync_enable">Синхронизировать проекты ежедневно</string>
+    <string name="scheduled_sync_time">Время: %1$s</string>
+    <string name="scheduled_sync_next">Следующая попытка около %1$s</string>
+    <string name="scheduled_sync_explanation">Android запускает фоновую работу по возможности и может начать её позже выбранного времени. Требуется подключение к сети.</string>
+    <string name="scheduled_sync_notification_denied">Уведомления отключены. Синхронизация по расписанию останется включённой, но выполняемая работа может быть менее заметна. Откройте настройки уведомлений.</string>
+    <string name="scheduled_sync_channel">Синхронизация по расписанию</string>
+    <string name="scheduled_sync_title">Синхронизация GitSy по расписанию</string>
+    <string name="scheduled_sync_running">Подготовка синхронизации…</string>
+    <string name="scheduled_sync_importing">Импорт локальных изменений…</string>
+    <string name="scheduled_sync_synchronizing">Синхронизация репозитория…</string>
+    <string name="scheduled_sync_exporting">Экспорт синхронизированных файлов…</string>
+    <string name="scheduled_sync_failure_transient">Синхронизация не удалась; новая попытка будет возможна завтра</string>
+    <string name="scheduled_sync_failure_authentication">Для синхронизации нужно обновить данные входа</string>
+    <string name="scheduled_sync_failure_ssh">Для синхронизации требуется действие с SSH</string>
+    <string name="scheduled_sync_failure_folder">Для синхронизации нужен доступ к папке</string>
+    <string name="scheduled_sync_failure_attention">Синхронизация требует внимания</string>
 </resources>
