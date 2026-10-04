@@ -1,0 +1,2 @@
+- Add configurable daily background synchronization.
+- Improve startup synchronization settings and SSH repository support.
