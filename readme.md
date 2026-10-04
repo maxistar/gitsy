@@ -36,9 +36,24 @@ are not available in this release.
 - update version in [build.gradle](app/build.gradle)
 - use menu item "Build" -> "Generate Signed App Bundle of Apk"
 
+### GitHub Releases
+
+A GitHub Release is created from a merged `release/<versionName>` (based on `dev`) or `hotfix/<versionName>` (based on `master`) pull request into `master`. The release automation creates an annotated `v<versionName>` tag, publishes signed APK/AAB assets and `SHA256SUMS`, then merges `master` back into `dev`.
+
+Before opening a release PR, increment `versionCode` and SemVer `versionName` in `app/build.gradle`, then create non-placeholder notes for both locales under `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`. `python3 scripts/release_tool.py prepare` creates missing placeholders; `python3 scripts/release_tool.py validate` checks a release branch.
+
+Configure these GitHub Actions secrets:
+
+- `ANDROID_KEYSTORE_BASE64`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+
+Repository Actions permissions and branch rules must allow `github-actions[bot]` to create tags/releases and push the post-release `master`-to-`dev` merge. In GitHub **Settings → Actions → General → Workflow permissions**, select **Read and write permissions** (the repository currently reports the default as read-only), and permit the bot in branch rules if rules are added later. If a tag exists but publishing failed, run **Publish Tagged Android Release** manually with that immutable tag. This phase does not use SCP/SSH delivery, Fastlane, or Google Play uploads.
+
 ### Automatic deployment
 
-@TODO
+GitHub Release publishing is automated as described above. Google Play delivery is not configured yet.
 
 
 ## Todo

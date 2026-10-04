@@ -1,0 +1,37 @@
+name: Sync Released Master to Dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published v<versionName> tag on master
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+      - name: Merge published master into dev
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          git fetch origin master dev --tags
+          test "$(git cat-file -t "$TAG")" = tag
+          git merge-base --is-ancestor "$TAG^{}" origin/master
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git merge --no-ff origin/master -m "Merge released $TAG back into dev"
+          git push origin HEAD:dev
