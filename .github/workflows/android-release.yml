@@ -47,6 +47,16 @@ jobs:
           test "$(git cat-file -t "$TAG")" = tag
           test "$(git rev-parse HEAD)" = "$(git rev-parse "$TAG^{}")"
           python3 scripts/release_tool.py validate --tag "$TAG" --skip-branch --allow-existing-tag
+      - name: Restore Play publishing tooling for historical tags
+        run: |
+          git fetch origin master --tags
+          if [ ! -f Gemfile ]; then
+            git checkout origin/master -- Gemfile Gemfile.lock fastlane scripts/release_tool.py release-config.json
+          fi
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
       - name: Detect complete release
         id: existing
         env:
@@ -124,3 +134,27 @@ jobs:
         run: |
           NOTES=$(python3 scripts/release_tool.py metadata | python3 -c 'import json,sys; print(json.load(sys.stdin)["englishNotes"])')
           gh release create "$TAG" release-artifacts/* --verify-tag --title "GitSy $TAG" --notes-file "$NOTES"
+      - name: Upload verified AAB to Google Play alpha
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT" ]; then
+            echo "::error::GOOGLE_PLAY_SERVICE_ACCOUNT is required for Google Play upload"
+            exit 1
+          fi
+          trap 'rm -f "$RUNNER_TEMP/service-account.json"' EXIT
+          printf '%s' "$GOOGLE_PLAY_SERVICE_ACCOUNT" | base64 --decode > "$RUNNER_TEMP/service-account.json"
+          RELEASE=$(python3 scripts/release_tool.py metadata)
+          VERSION=$(printf '%s' "$RELEASE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["versionName"])')
+          CODE=$(printf '%s' "$RELEASE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["versionCode"])')
+          TRACK=$(printf '%s' "$RELEASE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["playTrack"])')
+          METADATA_ROOT=$(printf '%s' "$RELEASE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["metadataRoot"])')
+          test "$TRACK" = alpha
+          AAB="$GITHUB_WORKSPACE/release-artifacts/gitsy-$VERSION.aab"
+          test -f "$AAB"
+          bundle exec fastlane android upload_release \
+            aab:"$AAB" \
+            version_code:"$CODE" \
+            metadata_path:"$GITHUB_WORKSPACE/$METADATA_ROOT" \
+            json_key:"$RUNNER_TEMP/service-account.json" \
+            track:"$TRACK"

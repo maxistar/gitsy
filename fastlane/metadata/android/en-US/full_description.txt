@@ -1,0 +1,1 @@
+GitSy synchronizes selected local folders with Git repositories.

@@ -10,6 +10,14 @@ import release_tool as tool
 
 
 class ReleaseToolTest(unittest.TestCase):
+    def test_metadata_exposes_alpha_play_track(self):
+        self.assertEqual(tool.metadata()["playTrack"], "alpha")
+
+    def test_fastlane_upload_lane_has_required_inputs(self):
+        fastfile = (tool.ROOT / "fastlane" / "Fastfile").read_text(encoding="utf-8")
+        for value in ("upload_release", "me.maxistar.gitsy", "version_code", "metadata_path", "skip_upload_apk: true", "skip_upload_images: true", "skip_upload_screenshots: true"):
+            self.assertIn(value, fastfile)
+
     def test_parse_groovy_version(self):
         value = tool.parse_version('versionCode 7\nversionName "1.2.3"\n')
         self.assertEqual(value, tool.Version("1.2.3", 7))

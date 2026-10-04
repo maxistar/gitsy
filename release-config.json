@@ -10,5 +10,5 @@
   "requiredLocales": ["en-US", "ru-RU"],
   "englishLocale": "en-US",
   "placeholderMarkers": ["TODO: RELEASE NOTES", "TODO_RELEASE_NOTES"],
-  "playTrack": "internal"
+  "playTrack": "alpha"
 }
