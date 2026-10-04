@@ -37,7 +37,7 @@ def run(*args: str, check: bool = True) -> str:
 
 def config() -> dict:
     data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    required = {"branches", "tagPrefix", "metadataRoot", "requiredLocales", "englishLocale", "placeholderMarkers"}
+    required = {"branches", "tagPrefix", "metadataRoot", "requiredLocales", "englishLocale", "placeholderMarkers", "playTrack"}
     if missing := required - data.keys():
         raise ReleaseError(f"release-config.json is missing: {', '.join(sorted(missing))}")
     return data
@@ -62,7 +62,7 @@ def version(ref: str | None = None) -> Version:
 def metadata(version_value: Version | None = None) -> dict:
     value = version_value or version()
     cfg = config()
-    return {"versionName": value.name, "versionCode": value.code, "tag": f'{cfg["tagPrefix"]}{value.name}', "englishNotes": str(notes(value, cfg)[cfg["englishLocale"]])}
+    return {"versionName": value.name, "versionCode": value.code, "tag": f'{cfg["tagPrefix"]}{value.name}', "englishNotes": str(notes(value, cfg)[cfg["englishLocale"]]), "metadataRoot": cfg["metadataRoot"], "playTrack": cfg["playTrack"]}
 
 
 def notes(value: Version, cfg: dict) -> dict[str, Path]:

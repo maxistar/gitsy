@@ -53,7 +53,9 @@ Repository Actions permissions and branch rules must allow `github-actions[bot]`
 
 ### Automatic deployment
 
-GitHub Release publishing is automated as described above. Google Play delivery is not configured yet.
+GitHub Release publishing is automated as described above. After GitHub Release assets are created or checksum-verified, the same workflow uploads the verified AAB to the Google Play closed-testing `alpha` track.
+
+For Google Play delivery, create a Google Cloud service account, enable the **Google Play Android Developer API**, add the service account to the Play Console app `me.maxistar.gitsy` with release-management access, and confirm the `alpha` closed-testing track exists. Store the compact service-account JSON as base64 in the `GOOGLE_PLAY_SERVICE_ACCOUNT` GitHub Actions secret. The workflow uploads no APKs, images, screenshots, or production releases; the matching version code must be visible in `alpha` after a successful run.
 
 
 ## Todo
