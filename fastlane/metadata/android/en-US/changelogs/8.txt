@@ -1,0 +1,1 @@
+- Add automatic delivery of releases to Google Play closed testing.
