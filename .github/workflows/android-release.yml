@@ -108,6 +108,9 @@ jobs:
       - name: Build signed APK and AAB
         if: steps.existing.outputs.complete != 'true'
         run: |
+          trap 'rm -f local.properties' EXIT
+          printf 'sdk.dir=%s\nRELEASE_STORE_FILE=%s\nRELEASE_STORE_PASSWORD=%s\nRELEASE_KEY_ALIAS=%s\nRELEASE_KEY_PASSWORD=%s\n' \
+            "$ANDROID_HOME" "$RELEASE_STORE_FILE" "$RELEASE_STORE_PASSWORD" "$RELEASE_KEY_ALIAS" "$RELEASE_KEY_PASSWORD" > local.properties
           ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon
           VERSION=$(python3 scripts/release_tool.py metadata | python3 -c 'import json,sys; print(json.load(sys.stdin)["versionName"])')
           cp app/build/outputs/apk/release/app-release.apk "release-artifacts/gitsy-$VERSION.apk"
