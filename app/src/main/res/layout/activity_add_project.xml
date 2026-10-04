@@ -5,13 +5,49 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context=".AddProjectActivity">
+    tools:context=".EditProjectActivity">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/form_explanation"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/credentialRecoveryGuidance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="@string/credential_recovery_guidance"
+        android:visibility="gone" />
+
+    <RadioGroup
+        android:id="@+id/authenticationTypeGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/authenticationTypeHttps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/authentication_https" />
+
+        <RadioButton
+            android:id="@+id/authenticationTypeSsh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:text="@string/authentication_ssh_key" />
+    </RadioGroup>
 
     <EditText
         android:id="@+id/repoUrlEditor"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Repository URL"
+        android:hint="@string/repository_url"
         android:text=""
         />
 
@@ -20,7 +56,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:hint="username" />
+        android:hint="@string/username" />
+
+    <TextView
+        android:id="@+id/sshUsernameSource"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
 
     <EditText
         android:id="@+id/passwordEditor"
@@ -28,13 +70,59 @@
         android:layout_height="wrap_content"
         android:text=""
         android:inputType="textPassword"
-        android:hint="password" />
+        android:hint="@string/password" />
+
+    <EditText
+        android:id="@+id/sshPortEditor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/ssh_port"
+        android:inputType="number"
+        android:text="22"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/sshPortSource"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/sshKeyAvailability"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/buttonSaveProject"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save Project" />
+        android:text="@string/select_project_folder" />
+
+    <TextView
+        android:id="@+id/tokenNote"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/token_note" />
+
+    <TextView
+        android:id="@+id/httpsNote"
+        android:layout_marginTop="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/https_note"
+         />
+
+    <TextView
+        android:id="@+id/readMoreLink"
+        android:layout_marginTop="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/read_more"
+        android:textColor="@android:color/holo_blue_dark"
+        android:textStyle="bold" />
 
     <Button
         android:id="@+id/testButton"
@@ -43,8 +131,5 @@
         android:text="Create Test Folder"
         android:visibility="gone"
         />
-
-
-
 
 </LinearLayout>

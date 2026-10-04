@@ -1,0 +1,10 @@
+{
+  "folderName": "project_fixture",
+  "folderUri": "content://test/tree/notes",
+  "repoUrl": "https://example.invalid/notes.git",
+  "userName": "fixture-user",
+  "lastSync": 123456789,
+  "numberFiles": 42,
+  "status": 2,
+  "password": "encoded:test-token:fixture-user"
+}

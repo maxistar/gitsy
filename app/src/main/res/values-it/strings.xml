@@ -1,0 +1,101 @@
+<resources>
+    <string name="app_name">GitSy</string>
+    <string name="About">Informazioni</string>
+    <string name="CloneRepo">Clona repository</string>
+    <string name="ResetRepo">Reimposta repository</string>
+    <string name="SyncRepo">Sincronizza repository</string>
+    <string name="AddRepo">Aggiungi repository</string>
+    <string name="SyncAll">Sincronizza tutto</string>
+    <string name="edit_project_title">Modifica progetto</string>
+    <string name="select_project_folder">Seleziona cartella del progetto</string>
+    <string name="repository_url">URL del repository</string>
+    <string name="username">nome utente</string>
+    <string name="password">password</string>
+    <string name="foreground_service_title">Servizio di sincronizzazione GitSy</string>
+    <string name="starting_service">Avvio del servizio…</string>
+    <string name="foreground_service_channel">Canale di sincronizzazione GitSy</string>
+    <string name="read_more">Leggi di più sul sito…</string>
+    <string name="documentation_url">https://gitsy.de/documentation/</string>
+
+    <string name="update_project">Aggiorna progetto</string>
+    <string name="delete_project_title">Elimina progetto</string>
+    <string name="delete_project_message">Sei sicuro di voler eliminare questo progetto?</string>
+    <string name="terms_and_conditions">Termini e condizioni</string>
+    <string name="visit_our_website_gitsy_de">Visita il nostro sito: gitsy.de</string>
+    <string name="create_first_project">Clona il tuo primo progetto</string>
+
+    <string name="form_explanation">Specifica nome utente/password* e URL del repository.**</string>
+    <string name="token_note">* Nota che GitLab/GitHub non usano combinazioni nome utente e password. Usa invece i token di accesso.</string>
+    <string name="https_note">** Al momento sono supportati solo URL HTTPS dei repository. Segui la guida su come creare un repository GitLab/GitHub accessibile con nome utente/password.</string>
+
+    <string name="application_was_stopped">L\'applicazione è stata arrestata</string>
+    <string name="application_was_stopped_message">Sembra che l\'applicazione sia stata arrestata durante la sincronizzazione. Questo potrebbe causare risultati imprevisti, tieni l\'applicazione aperta durante la sincronizzazione!</string>
+    <string name="startup_sync_settings_menu">Sincronizzazione all’avvio</string>
+    <string name="startup_sync_settings_title">Sincronizzazione all’avvio</string>
+    <string name="startup_sync_explanation">Scegli se sincronizzare automaticamente i progetti all’avvio di GitSy.</string>
+    <string name="startup_sync_mode_never">Mai</string>
+    <string name="startup_sync_mode_ask_if_stale">Chiedi se non aggiornati</string>
+    <string name="startup_sync_mode_if_stale">Se non aggiornati</string>
+    <string name="startup_sync_mode_always">Sempre</string>
+    <string name="startup_sync_interval_label">Sincronizza quando l’ultima sincronizzazione risale a più di</string>
+    <string name="startup_sync_interval_15_minutes">15 minuti</string>
+    <string name="startup_sync_interval_1_hour">1 ora</string>
+    <string name="startup_sync_interval_6_hours">6 ore</string>
+    <string name="startup_sync_interval_24_hours">24 ore</string>
+    <string name="save">Salva</string>
+    <string name="startup_sync_prompt_title">Sincronizzare i progetti?</string>
+    <plurals name="startup_sync_prompt_message">
+        <item quantity="one">%1$d progetto non è stato sincronizzato da %2$s. Sincronizzarlo ora?</item>
+        <item quantity="other">%1$d progetti non sono stati sincronizzati da %2$s. Sincronizzarli ora?</item>
+    </plurals>
+    <string name="startup_sync_prompt_synchronize">Sincronizza</string>
+    <string name="startup_sync_prompt_not_now">Non ora</string>
+    <string name="startup_sync_remember_choice">Ricorda la mia scelta</string>
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_sync_section">Sincronizzazione</string>
+    <string name="startup_sync_explanation_never">I progetti vengono sincronizzati solo su richiesta manuale.</string>
+    <string name="startup_sync_explanation_ask">GitSy chiede conferma prima di sincronizzare i progetti più vecchi dell’intervallo selezionato.</string>
+    <string name="startup_sync_explanation_if_stale">I progetti più vecchi dell’intervallo selezionato vengono sincronizzati automaticamente.</string>
+    <string name="startup_sync_explanation_always">I progetti idonei vengono sincronizzati a ogni avvio di GitSy.</string>
+    <string name="settings_about_section">Informazioni</string>
+    <string name="settings_about_version">GitSy\nVersione %1$s</string>
+    <string name="settings_version_unknown">Sconosciuta</string>
+    <string name="settings_website">Sito web</string>
+    <string name="settings_documentation">Documentazione</string>
+    <string name="settings_terms">Termini e condizioni</string>
+    <string name="settings_link_error">Nessuna applicazione può aprire questo collegamento.</string>
+    <string name="authentication_https">HTTPS</string><string name="authentication_ssh_key">Chiave SSH</string><string name="ssh_port">Porta SSH</string>
+    <string name="ssh_key_available">La chiave SSH globale è configurata</string><string name="ssh_key_unavailable">Configura prima la chiave SSH globale nelle Impostazioni</string>
+    <string name="settings_ssh_section">Autenticazione SSH</string><string name="ssh_key_not_configured">Nessuna chiave SSH configurata</string><string name="ssh_key_summary">%1$s %2$d · %3$s</string>
+    <string name="ssh_key_import">Importa chiave SSH</string><string name="ssh_key_replace">Sostituisci chiave SSH</string><string name="ssh_key_delete">Elimina chiave SSH</string>
+    <string name="ssh_key_delete_title">Eliminare la chiave SSH?</string><string name="ssh_key_delete_message">I progetti SSH non potranno sincronizzarsi finché non verrà importata un’altra chiave.</string>
+    <string name="ssh_key_passphrase_title">Chiave SSH cifrata</string><string name="ssh_key_passphrase_hint">Passphrase</string><string name="ssh_key_retain_passphrase">Memorizza la passphrase in modo sicuro</string>
+    <string name="ssh_key_import_success">Chiave SSH importata</string><string name="ssh_key_error_malformed">Il documento selezionato non è una chiave privata SSH valida.</string><string name="ssh_key_error_unsupported">Questo algoritmo di chiave SSH non è supportato.</string><string name="ssh_key_error_passphrase">La passphrase non è corretta.</string><string name="ssh_key_error_storage">Impossibile memorizzare la chiave SSH in modo sicuro.</string><string name="ssh_key_error_read">Impossibile leggere il documento selezionato.</string><string name="ssh_key_settings_action">Apri Impostazioni</string>
+    <string name="ssh_host_trust_title">Considerare attendibile il server SSH?</string><string name="ssh_host_trust_message">Host: %1$s\nPorta: %2$d\nAlgoritmo: %3$s\nImpronta: %4$s</string><string name="ssh_host_trust">Considera attendibile</string><string name="ssh_host_trust_error">Impossibile salvare l’identità del server.</string><string name="ssh_host_changed_title">Identità del server SSH modificata</string><string name="ssh_host_changed_message">Sincronizzazione bloccata. Verifica l’impronta prima di sostituire l’identità salvata.</string><string name="ssh_key_missing_title">Chiave SSH richiesta</string><string name="ssh_key_missing_message">Configura la chiave SSH globale nelle Impostazioni prima della sincronizzazione.</string>
+    <string name="ssh_value_from_url">Dall’URL del repository</string>
+    <string name="ssh_username_fallback">Obbligatorio perché l’URL del repository non contiene un nome utente</string>
+    <string name="ssh_port_fallback">Usata perché l’URL del repository non contiene una porta</string>
+    <string name="ssh_port_default">Porta predefinita 22; modificabile perché l’URL non contiene una porta</string>
+    <string name="https_clone_authentication_error">Autenticazione non riuscita. Controlla nome utente e token HTTPS, quindi riprova.</string>
+    <string name="clone_failed_sanitized">Impossibile clonare il repository. Controlla impostazioni del progetto e connessione.</string>
+    <string name="check_credentials">Controlla credenziali</string>
+    <string name="credential_recovery_guidance">Il repository ha rifiutato queste credenziali HTTPS. Controlla nome utente e token; il salvataggio riproverà la clonazione.</string>
+    <string name="save_and_retry">Salva e riprova</string>
+    <string name="scheduled_sync_settings_title">Sincronizzazione giornaliera in background</string>
+    <string name="scheduled_sync_enable">Sincronizza i progetti ogni giorno</string>
+    <string name="scheduled_sync_time">Ora: %1$s</string>
+    <string name="scheduled_sync_next">Prossimo tentativo verso %1$s</string>
+    <string name="scheduled_sync_explanation">Android esegue il lavoro in background quando possibile e può avviarlo dopo l’ora selezionata. È necessaria una connessione di rete.</string>
+    <string name="scheduled_sync_notification_denied">Le notifiche sono disattivate. La sincronizzazione pianificata resta attiva, ma il lavoro in corso potrebbe essere meno visibile. Controlla le impostazioni delle notifiche.</string>
+    <string name="scheduled_sync_channel">Sincronizzazione pianificata</string>
+    <string name="scheduled_sync_title">Sincronizzazione pianificata GitSy</string>
+    <string name="scheduled_sync_running">Preparazione della sincronizzazione…</string>
+    <string name="scheduled_sync_importing">Importazione delle modifiche locali…</string>
+    <string name="scheduled_sync_synchronizing">Sincronizzazione del repository…</string>
+    <string name="scheduled_sync_exporting">Esportazione dei file sincronizzati…</string>
+    <string name="scheduled_sync_failure_transient">Sincronizzazione non riuscita; sarà di nuovo disponibile domani</string>
+    <string name="scheduled_sync_failure_authentication">La sincronizzazione richiede credenziali aggiornate</string>
+    <string name="scheduled_sync_failure_ssh">La sincronizzazione richiede attenzione SSH</string>
+    <string name="scheduled_sync_failure_folder">La sincronizzazione richiede l’accesso alla cartella</string>
+    <string name="scheduled_sync_failure_attention">La sincronizzazione richiede attenzione</string>
+</resources>
