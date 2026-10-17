@@ -44,6 +44,8 @@ public class ProjectJsonAdapterTest {
         project.lastSync = 123456789L;
         project.numberFiles = 42;
         project.status = ProjectModel.STATUS_READY;
+        project.cloneFailureCategory = CloneFailureCategory.AUTHENTICATION;
+        project.syncFailureCategory = SyncFailureCategory.TRANSIENT;
 
         ProjectModel restored = gson.fromJson(gson.toJson(project), ProjectModel.class);
 
@@ -56,6 +58,9 @@ public class ProjectJsonAdapterTest {
         assertEquals(project.lastSync, restored.lastSync);
         assertEquals(project.numberFiles, restored.numberFiles);
         assertEquals(project.status, restored.status);
+        assertEquals(CloneFailureCategory.AUTHENTICATION,
+                restored.cloneFailureCategory);
+        assertEquals(SyncFailureCategory.TRANSIENT, restored.syncFailureCategory);
     }
 
     @Test
@@ -76,6 +81,8 @@ public class ProjectJsonAdapterTest {
         assertEquals(ProjectModel.STATUS_TO_CLONE, restored.status);
         assertEquals("", restored.password);
         assertEquals(ProjectAuthenticationType.HTTPS, restored.authenticationType);
+        assertEquals(CloneFailureCategory.NONE, restored.cloneFailureCategory);
+        assertEquals(SyncFailureCategory.NONE, restored.syncFailureCategory);
     }
 
     @Test
@@ -146,6 +153,34 @@ public class ProjectJsonAdapterTest {
         } catch (JsonParseException expected) {
             assertFalse(String.valueOf(expected.getMessage()).contains(sensitiveBlob));
         }
+    }
+
+    @Test
+    public void unknownCloneFailureCategoryFallsBackToNone() {
+        String json = "{\"folderUri\":\"content://test/tree/x\","
+                + "\"repoUrl\":\"https://example.invalid/x.git\","
+                + "\"userName\":\"user\",\"cloneFailureCategory\":\"future-value\"}";
+        assertEquals(CloneFailureCategory.NONE,
+                gson.fromJson(json, ProjectModel.class).getCloneFailureCategory());
+    }
+
+    @Test
+    public void noneCloneFailureIsOmittedAndClearsAfterRoundTrip() {
+        ProjectModel project = new ProjectModel("https://example.invalid/x.git",
+                "user", "token", "content://test/tree/x");
+        project.setCloneFailureCategory(CloneFailureCategory.NONE);
+        String json = gson.toJson(project);
+        assertFalse(json.contains("cloneFailureCategory"));
+        assertEquals(CloneFailureCategory.NONE,
+                gson.fromJson(json, ProjectModel.class).getCloneFailureCategory());
+    }
+
+    @Test public void unknownSyncFailureCategoryFallsBackToNone() {
+        String json = "{\"folderUri\":\"content://test/tree/x\","
+                + "\"repoUrl\":\"https://example.invalid/x.git\","
+                + "\"userName\":\"user\",\"syncFailureCategory\":\"future-value\"}";
+        assertEquals(SyncFailureCategory.NONE,
+                gson.fromJson(json, ProjectModel.class).getSyncFailureCategory());
     }
 
     private static String resource(String name) throws IOException {

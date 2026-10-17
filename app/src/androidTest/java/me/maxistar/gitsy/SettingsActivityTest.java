@@ -1,6 +1,9 @@
 package me.maxistar.gitsy;
 
 import android.content.Context;
+import android.os.Build;
+import android.os.ParcelFileDescriptor;
+import android.content.res.Configuration;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
@@ -18,6 +21,7 @@ import com.jcraft.jsch.KeyPair;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Locale;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu;
@@ -49,6 +53,7 @@ public class SettingsActivityTest {
     public void setUp() {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         preferences().edit().clear().commit();
+        scheduledPreferences().edit().clear().commit();
         context.deleteFile("projects.json");
         ServiceLocator.getInstance().replaceStartupSyncSessionForTests(new StartupSyncSession());
     }
@@ -56,6 +61,7 @@ public class SettingsActivityTest {
     @After
     public void tearDown() {
         preferences().edit().clear().commit();
+        scheduledPreferences().edit().clear().commit();
     }
 
     @Test
@@ -90,6 +96,88 @@ public class SettingsActivityTest {
             onView(withId(R.id.settings_website_row)).perform(scrollTo()).check(matches(isDisplayed()));
             onView(withId(R.id.settings_documentation_row)).perform(scrollTo()).check(matches(isDisplayed()));
             onView(withId(R.id.settings_terms_row)).perform(scrollTo()).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test public void scheduledDefaultsAreDisabledAtTwoAndStartupRemainsIndependent() {
+        try (ActivityScenario<SettingsActivity> scenario = ActivityScenario.launch(SettingsActivity.class)) {
+            onView(withId(R.id.scheduled_sync_enabled)).perform(scrollTo())
+                    .check(matches(not(isChecked())));
+            onView(withId(R.id.scheduled_sync_time)).check(matches(isDisplayed()));
+            ScheduledSyncSettings scheduled = new SharedPreferencesScheduledSyncSettings(context).load();
+            assertFalse(scheduled.isEnabled());
+            assertEquals(2, scheduled.getHour());
+            assertEquals(0, scheduled.getMinute());
+            assertEquals(StartupSyncSettings.DEFAULT.getMode(), repository().load().getMode());
+            assertEquals(StartupSyncSettings.DEFAULT.getInterval(), repository().load().getInterval());
+        }
+    }
+
+    @Test public void storedScheduledSettingSurvivesActivityRecreation() {
+        new SharedPreferencesScheduledSyncSettings(context)
+                .save(new ScheduledSyncSettings(true, 4, 15));
+        try (ActivityScenario<SettingsActivity> scenario = ActivityScenario.launch(SettingsActivity.class)) {
+            onView(withId(R.id.scheduled_sync_enabled)).perform(scrollTo())
+                    .check(matches(isChecked()));
+            onView(withId(R.id.scheduled_sync_next)).check(matches(isDisplayed()));
+            scenario.recreate();
+            onView(withId(R.id.scheduled_sync_enabled)).perform(scrollTo())
+                    .check(matches(isChecked()));
+            ScheduledSyncSettings scheduled = new SharedPreferencesScheduledSyncSettings(context).load();
+            assertEquals(4, scheduled.getHour());
+            assertEquals(15, scheduled.getMinute());
+        }
+    }
+
+    @Test public void selectedTimePersistsAndSurvivesRecreation() {
+        try (ActivityScenario<SettingsActivity> scenario = ActivityScenario.launch(SettingsActivity.class)) {
+            scenario.onActivity(activity -> activity.updateScheduledTime(5, 35));
+            ScheduledSyncSettings value = new SharedPreferencesScheduledSyncSettings(context).load();
+            assertEquals(5, value.getHour()); assertEquals(35, value.getMinute());
+            scenario.recreate();
+            value = new SharedPreferencesScheduledSyncSettings(context).load();
+            assertEquals(5, value.getHour()); assertEquals(35, value.getMinute());
+        }
+    }
+
+    @Test public void scheduledSettingEnablesAndDisablesImmediately() {
+        grantNotifications();
+        try (ActivityScenario<SettingsActivity> scenario = ActivityScenario.launch(SettingsActivity.class)) {
+            onView(withId(R.id.scheduled_sync_enabled)).perform(scrollTo(), click());
+            assertTrue(new SharedPreferencesScheduledSyncSettings(context).load().isEnabled());
+            onView(withId(R.id.scheduled_sync_next)).check(matches(isDisplayed()));
+            assertEquals(StartupSyncSettings.DEFAULT.getMode(), repository().load().getMode());
+
+            onView(withId(R.id.scheduled_sync_enabled)).perform(click());
+            assertFalse(new SharedPreferencesScheduledSyncSettings(context).load().isEnabled());
+            onView(withId(R.id.scheduled_sync_next)).check(matches(not(isDisplayed())));
+        }
+    }
+
+    @Test public void deniedNotificationStateIsExplainedWithoutDisablingSchedule() {
+        if (Build.VERSION.SDK_INT < 33) return;
+        new SharedPreferencesScheduledSyncSettings(context)
+                .save(new ScheduledSyncSettings(true, 2, 0));
+        appOpNotifications("ignore");
+        try (ActivityScenario<SettingsActivity> scenario = ActivityScenario.launch(SettingsActivity.class)) {
+            onView(withId(R.id.scheduled_sync_notification_guidance)).perform(scrollTo())
+                    .check(matches(isDisplayed()));
+            assertTrue(new SharedPreferencesScheduledSyncSettings(context).load().isEnabled());
+        } finally {
+            appOpNotifications("allow");
+        }
+    }
+
+    @Test public void scheduledCopyExistsInEverySupportedLocale() {
+        for (String language : new String[]{"en", "de", "it", "ru"}) {
+            Configuration configuration = new Configuration(context.getResources().getConfiguration());
+            configuration.setLocale(Locale.forLanguageTag(language));
+            Context localized = context.createConfigurationContext(configuration);
+            assertFalse(localized.getString(R.string.scheduled_sync_settings_title).isEmpty());
+            assertFalse(localized.getString(R.string.scheduled_sync_explanation).isEmpty());
+            assertFalse(localized.getString(R.string.scheduled_sync_notification_denied).isEmpty());
+            assertFalse(localized.getString(R.string.scheduled_sync_running).isEmpty());
+            assertFalse(localized.getString(R.string.scheduled_sync_failure_attention).isEmpty());
         }
     }
 
@@ -171,5 +259,32 @@ public class SettingsActivityTest {
 
     private SharedPreferencesStartupSyncSettings repository() {
         return new SharedPreferencesStartupSyncSettings(context);
+    }
+
+    private android.content.SharedPreferences scheduledPreferences() {
+        return context.getSharedPreferences(
+                SharedPreferencesScheduledSyncSettings.PREFERENCES_NAME, Context.MODE_PRIVATE);
+    }
+
+    private void grantNotifications() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            shell("pm grant " + context.getPackageName()
+                    + " android.permission.POST_NOTIFICATIONS");
+            appOpNotifications("allow");
+        }
+    }
+
+    private void appOpNotifications(String mode) {
+        shell("cmd appops set " + context.getPackageName()
+                + " POST_NOTIFICATION " + mode);
+    }
+
+    private void shell(String command) {
+        try (ParcelFileDescriptor ignored = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().executeShellCommand(command)) {
+            // Closing the descriptor waits for the tiny shell command to be dispatched.
+        } catch (Exception error) {
+            throw new AssertionError(error);
+        }
     }
 }

@@ -100,6 +100,55 @@
         </RadioGroup>
 
         <TextView
+            android:id="@+id/scheduled_sync_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/scheduled_sync_settings_title"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/scheduled_sync_enabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/scheduled_sync_enable" />
+
+        <TextView
+            android:id="@+id/scheduled_sync_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingVertical="12dp" />
+
+        <TextView
+            android:id="@+id/scheduled_sync_next"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/scheduled_sync_explanation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/scheduled_sync_explanation" />
+
+        <TextView
+            android:id="@+id/scheduled_sync_notification_guidance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingVertical="8dp"
+            android:text="@string/scheduled_sync_notification_denied"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/settings_ssh_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

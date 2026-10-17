@@ -1,0 +1,46 @@
+default_platform(:android)
+
+platform :android do
+  desc "Fail when a version code already exists on a Google Play track"
+  lane :validate_play_version_code do |options|
+    version_code = Integer(options.fetch(:version_code))
+    json_key = File.expand_path(options.fetch(:json_key))
+    track = options.fetch(:track)
+    codes = google_play_track_version_codes(
+      package_name: "me.maxistar.gitsy",
+      json_key: json_key,
+      track: track
+    ).map(&:to_i)
+    UI.user_error!("versionCode #{version_code} already exists on #{track}") if codes.include?(version_code)
+  end
+
+  desc "Upload one already-built AAB and localized metadata to an explicit Play track"
+  lane :upload_release do |options|
+    aab = File.expand_path(options.fetch(:aab))
+    version_code = Integer(options.fetch(:version_code))
+    json_key = File.expand_path(options.fetch(:json_key))
+    metadata_path = File.expand_path(options.fetch(:metadata_path))
+    track = options.fetch(:track)
+    UI.user_error!("AAB does not exist: #{aab}") unless File.file?(aab)
+    existing = google_play_track_version_codes(
+      package_name: "me.maxistar.gitsy",
+      json_key: json_key,
+      track: track
+    ).map(&:to_i)
+    if existing.include?(version_code)
+      UI.message("versionCode #{version_code} already exists on #{track}; upload is complete")
+      next
+    end
+    upload_to_play_store(
+      package_name: "me.maxistar.gitsy",
+      aab: aab,
+      json_key: json_key,
+      metadata_path: metadata_path,
+      track: track,
+      release_status: "completed",
+      skip_upload_apk: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end

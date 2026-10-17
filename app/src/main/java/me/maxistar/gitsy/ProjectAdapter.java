@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Button;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +19,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
 
     public interface OnProjectListener {
         void onProjectDelete(int position);
+        void onProjectCheckCredentials(int position);
         // void onProjectSynchronize(int position);
     }
 
@@ -42,9 +44,13 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
     public void onBindViewHolder(@NonNull ProjectViewHolder holder, int position) {
         ProjectModel project = projectList.get(position);
         holder.textView.setText(project.getRepoUrl());
-        holder.statusView.setText(statusToString(project.getStatus()));
+        holder.statusView.setText(statusToString(holder.itemView, project));
         String lastChanges = formatLastSync(project.getLastSync());
         holder.filesView.setText("files: " + project.getNumberFiles() + lastChanges);
+        boolean authenticationFailure = project.getAuthenticationType() == ProjectAuthenticationType.HTTPS
+                && (project.getCloneFailureCategory() == CloneFailureCategory.AUTHENTICATION
+                || project.getSyncFailureCategory() == SyncFailureCategory.AUTHENTICATION);
+        holder.checkCredentials.setVisibility(authenticationFailure ? View.VISIBLE : View.GONE);
     }
 
     private String formatLastSync(long lastSync) {
@@ -61,7 +67,21 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
 
     }
 
-    private String statusToString(int status) {
+    private String statusToString(View view, ProjectModel project) {
+        SyncFailureCategory failure = project.getSyncFailureCategory();
+        if (failure != SyncFailureCategory.NONE) {
+            int message = failure == SyncFailureCategory.TRANSIENT
+                    ? R.string.scheduled_sync_failure_transient
+                    : failure == SyncFailureCategory.AUTHENTICATION
+                    ? R.string.scheduled_sync_failure_authentication
+                    : failure == SyncFailureCategory.SSH_ATTENTION
+                    ? R.string.scheduled_sync_failure_ssh
+                    : failure == SyncFailureCategory.FOLDER_ACCESS
+                    ? R.string.scheduled_sync_failure_folder
+                    : R.string.scheduled_sync_failure_attention;
+            return view.getContext().getString(message);
+        }
+        int status = project.getStatus();
         if (status == ProjectModel.STATUS_READY) {
             return " ready";
         } else if (status == ProjectModel.STATUS_TO_CLONE) {
@@ -90,6 +110,7 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
         TextView statusView;
 
         TextView filesView;
+        Button checkCredentials;
         OnProjectListener onProjectListener;
 
         public ProjectViewHolder(View itemView, OnProjectListener listener) {
@@ -97,7 +118,14 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
             textView = itemView.findViewById(R.id.item_title);
             statusView = itemView.findViewById(R.id.item_status);
             filesView = itemView.findViewById(R.id.item_files);
+            checkCredentials = itemView.findViewById(R.id.item_check_credentials);
             this.onProjectListener = listener;
+            checkCredentials.setOnClickListener(view -> {
+                int position = getAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    onProjectListener.onProjectCheckCredentials(position);
+                }
+            });
             itemView.setOnCreateContextMenuListener(this); // Register for context menu
         }
 
@@ -110,4 +138,3 @@ public class ProjectAdapter extends RecyclerView.Adapter<ProjectAdapter.ProjectV
 
     }
 }
-

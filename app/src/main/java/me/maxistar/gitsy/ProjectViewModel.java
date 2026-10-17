@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import java.util.ArrayList;
+import java.io.File;
 import java.util.List;
 
 public class ProjectViewModel extends ViewModel {
@@ -61,7 +62,7 @@ public class ProjectViewModel extends ViewModel {
         List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
         if (position >= 0 && position < currentProjects.size()) {
             ProjectModel model = currentProjects.get(position);
-            model.setStatus(ProjectModel.STATUS_TO_SYNC);
+            model.setStatus(statusForRequestedSynchronization(context, model));
             repository.saveProjects(context);
             projects.setValue(repository.getProjects());
         }
@@ -70,7 +71,7 @@ public class ProjectViewModel extends ViewModel {
     public void syncAllProjects(Context context) {
         List<ProjectModel> currentProjects = new ArrayList<>(repository.getProjects());
         for (ProjectModel model : currentProjects) {
-            model.setStatus(ProjectModel.STATUS_TO_SYNC);
+            model.setStatus(statusForRequestedSynchronization(context, model));
         }
         repository.saveProjects(context);
         projects.setValue(repository.getProjects());
@@ -79,7 +80,7 @@ public class ProjectViewModel extends ViewModel {
 
     public void syncProjects(Context context, List<ProjectModel> selectedProjects) {
         for (ProjectModel model : selectedProjects) {
-            model.setStatus(ProjectModel.STATUS_TO_SYNC);
+            model.setStatus(statusForRequestedSynchronization(context, model));
         }
         repository.saveProjects(context);
         projects.setValue(repository.getProjects());
@@ -116,5 +117,15 @@ public class ProjectViewModel extends ViewModel {
     public void setProject(ProjectModel project, int editPosition, Context applicationContext) {
         repository.setProject(applicationContext, project, editPosition);
         projects.setValue(repository.getProjects());
+    }
+
+    static int statusForRequestedSynchronization(Context context, ProjectModel model) {
+        return statusForRequestedSynchronization(context.getFilesDir(), model);
+    }
+
+    static int statusForRequestedSynchronization(File filesDirectory, ProjectModel model) {
+        File repository = new File(filesDirectory, model.getFolderName());
+        return new File(repository, ".git").isDirectory()
+                ? ProjectModel.STATUS_TO_SYNC : ProjectModel.STATUS_TO_CLONE;
     }
 }

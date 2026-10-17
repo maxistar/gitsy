@@ -49,4 +49,13 @@
         android:gravity="end"
         />
 
+    <Button
+        android:id="@+id/item_check_credentials"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/item_files"
+        android:layout_alignParentStart="true"
+        android:text="@string/check_credentials"
+        android:visibility="gone" />
+
 </RelativeLayout>

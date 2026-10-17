@@ -2,10 +2,13 @@ package me.maxistar.gitsy;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.app.TimePickerDialog;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.InputType;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,9 +23,17 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Arrays;
 
 public final class SettingsActivity extends AppCompatActivity {
@@ -41,6 +52,14 @@ public final class SettingsActivity extends AppCompatActivity {
     private Button sshImport;
     private Button sshDelete;
     private byte[] pendingPrivateKey;
+    private static final int REQUEST_NOTIFICATIONS = 42;
+    private SharedPreferencesScheduledSyncSettings scheduledRepository;
+    private ScheduledSyncScheduler scheduledScheduler;
+    private SwitchCompat scheduledEnabled;
+    private TextView scheduledTime;
+    private TextView scheduledNext;
+    private TextView notificationGuidance;
+    private boolean restoringScheduled;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +71,10 @@ public final class SettingsActivity extends AppCompatActivity {
         }
 
         repository = new SharedPreferencesStartupSyncSettings(getApplicationContext());
+        scheduledRepository = new SharedPreferencesScheduledSyncSettings(getApplicationContext());
+        scheduledScheduler = new ScheduledSyncScheduler(scheduledRepository,
+                new AndroidWorkManagerGateway(getApplicationContext()),
+                Clock.systemUTC(), ZoneId.systemDefault());
         modeGroup = findViewById(R.id.startup_sync_mode_group);
         intervalGroup = findViewById(R.id.startup_sync_interval_group);
         intervalLabel = findViewById(R.id.startup_sync_interval_label);
@@ -59,6 +82,10 @@ public final class SettingsActivity extends AppCompatActivity {
         sshSummary = findViewById(R.id.settings_ssh_summary);
         sshImport = findViewById(R.id.settings_ssh_import);
         sshDelete = findViewById(R.id.settings_ssh_delete);
+        scheduledEnabled = findViewById(R.id.scheduled_sync_enabled);
+        scheduledTime = findViewById(R.id.scheduled_sync_time);
+        scheduledNext = findViewById(R.id.scheduled_sync_next);
+        notificationGuidance = findViewById(R.id.scheduled_sync_notification_guidance);
         try {
             ValueEncryptor encryptor = ServiceLocator.getInstance().getValueEncryptor();
             sshIdentities = new EncryptedFileSshIdentityRepository(getApplicationContext(), encryptor);
@@ -85,6 +112,22 @@ public final class SettingsActivity extends AppCompatActivity {
                     current.getMode(), intervalFromButtonId(checkedId)));
         });
 
+        restoringScheduled = true;
+        renderScheduled(scheduledRepository.load());
+        restoringScheduled = false;
+        scheduledEnabled.setOnCheckedChangeListener((button, enabled) -> {
+            if (restoringScheduled) return;
+            ScheduledSyncSettings current = scheduledRepository.load();
+            ScheduledSyncSettings updated = new ScheduledSyncSettings(
+                    enabled, current.getHour(), current.getMinute());
+            scheduledRepository.save(updated);
+            scheduledScheduler.reconcile();
+            renderScheduled(updated);
+            if (enabled) requestNotificationPermissionIfNeeded();
+        });
+        scheduledTime.setOnClickListener(view -> showScheduledTimePicker());
+        notificationGuidance.setOnClickListener(view -> openNotificationSettings());
+
         ((TextView) findViewById(R.id.settings_about_version)).setText(
                 getString(R.string.settings_about_version, appVersionName()));
         findViewById(R.id.settings_website_row).setOnClickListener(
@@ -96,6 +139,84 @@ public final class SettingsActivity extends AppCompatActivity {
         sshImport.setOnClickListener(view -> openSshKeyDocument());
         sshDelete.setOnClickListener(view -> confirmDeleteSshKey());
         renderSshIdentity();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (notificationGuidance != null) renderNotificationGuidance();
+    }
+
+    private void showScheduledTimePicker() {
+        ScheduledSyncSettings current = scheduledRepository.load();
+        new TimePickerDialog(this, (picker, hour, minute) -> updateScheduledTime(hour, minute),
+                current.getHour(), current.getMinute(),
+                android.text.format.DateFormat.is24HourFormat(this)).show();
+    }
+
+    void updateScheduledTime(int hour, int minute) {
+        ScheduledSyncSettings current = scheduledRepository.load();
+        ScheduledSyncSettings updated = new ScheduledSyncSettings(
+                current.isEnabled(), hour, minute);
+        scheduledRepository.save(updated);
+        scheduledScheduler.reconcile();
+        renderScheduled(updated);
+    }
+
+    private void renderScheduled(ScheduledSyncSettings settings) {
+        restoringScheduled = true;
+        scheduledEnabled.setChecked(settings.isEnabled());
+        restoringScheduled = false;
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, settings.getHour());
+        calendar.set(java.util.Calendar.MINUTE, settings.getMinute());
+        scheduledTime.setText(getString(R.string.scheduled_sync_time,
+                DateFormat.getTimeInstance(DateFormat.SHORT).format(calendar.getTime())));
+        if (settings.isEnabled()) {
+            Instant next = new NextScheduledSyncCalculator(
+                    Clock.systemUTC(), ZoneId.systemDefault())
+                    .next(settings.getHour(), settings.getMinute());
+            scheduledNext.setText(getString(R.string.scheduled_sync_next,
+                    DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
+                            .format(Date.from(next))));
+            scheduledNext.setVisibility(View.VISIBLE);
+        } else {
+            scheduledNext.setVisibility(View.GONE);
+        }
+        renderNotificationGuidance();
+    }
+
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33
+                && ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                    REQUEST_NOTIFICATIONS);
+        }
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode,
+            @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_NOTIFICATIONS) renderNotificationGuidance();
+    }
+
+    private void renderNotificationGuidance() {
+        boolean denied = scheduledRepository.load().isEnabled()
+                && Build.VERSION.SDK_INT >= 33
+                && !NotificationManagerCompat.from(this).areNotificationsEnabled();
+        notificationGuidance.setVisibility(denied ? View.VISIBLE : View.GONE);
+    }
+
+    private void openNotificationSettings() {
+        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException error) {
+            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + getPackageName())));
+        }
     }
 
     private void openSshKeyDocument() {

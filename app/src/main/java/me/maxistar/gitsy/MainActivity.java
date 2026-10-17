@@ -246,8 +246,13 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void editProjectById(int position) {
+        editProjectById(position, false);
+    }
+
+    private void editProjectById(int position, boolean authenticationRecovery) {
         Intent intent = new Intent(this, EditProjectActivity.class);
         intent.putExtra("position", position);
+        intent.putExtra(EditProjectActivity.EXTRA_AUTHENTICATION_RECOVERY, authenticationRecovery);
         startActivity(intent);
     }
 
@@ -255,6 +260,11 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onProjectDelete(int position) {
         viewModel.deleteProject(getApplicationContext(), position);
+    }
+
+    @Override
+    public void onProjectCheckCredentials(int position) {
+        editProjectById(position, true);
     }
 
 

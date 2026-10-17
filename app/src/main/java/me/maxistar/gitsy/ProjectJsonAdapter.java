@@ -52,6 +52,13 @@ public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDes
         obj.addProperty("lastSync", src.lastSync);
         obj.addProperty("numberFiles", src.numberFiles);
         obj.addProperty("status", src.status);
+        if (src.cloneFailureCategory != CloneFailureCategory.NONE) {
+            obj.addProperty("cloneFailureCategory",
+                    src.cloneFailureCategory.getSerializedValue());
+        }
+        if (src.syncFailureCategory != SyncFailureCategory.NONE) {
+            obj.addProperty("syncFailureCategory", src.syncFailureCategory.getSerializedValue());
+        }
         //obj.addProperty("password", src.password);
 
         try {
@@ -96,6 +103,16 @@ public class ProjectJsonAdapter implements JsonSerializer<ProjectModel>, JsonDes
         p.lastSync = longValue(obj, "lastSync", 0L);
         p.numberFiles = intValue(obj, "numberFiles", 0);
         p.status = intValue(obj, "status", ProjectModel.STATUS_TO_CLONE);
+        p.cloneFailureCategory = obj.has("cloneFailureCategory")
+                && !obj.get("cloneFailureCategory").isJsonNull()
+                ? CloneFailureCategory.fromSerializedValue(
+                        obj.get("cloneFailureCategory").getAsString())
+                : CloneFailureCategory.NONE;
+        p.syncFailureCategory = obj.has("syncFailureCategory")
+                && !obj.get("syncFailureCategory").isJsonNull()
+                ? SyncFailureCategory.fromSerializedValue(
+                        obj.get("syncFailureCategory").getAsString())
+                : SyncFailureCategory.NONE;
 
         if (p.authenticationType == ProjectAuthenticationType.HTTPS
                 && obj.has("password") && !obj.get("password").isJsonNull()) {
