@@ -44,6 +44,8 @@ public class EditProjectActivity extends AppCompatActivity {
     private String fallbackSshPort = "22";
     private boolean renderingAuthentication;
     private boolean authenticationRecovery;
+    private final ManualSyncNotificationPermission manualSyncNotificationPermission =
+            new ManualSyncNotificationPermission();
 
     private static final int REQUEST_CODE_OPEN_DIRECTORY = 1;
 
@@ -55,6 +57,7 @@ public class EditProjectActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_project);
+        manualSyncNotificationPermission.restoreInstanceState(savedInstanceState);
 
         repoUrlEditor = this.findViewById(R.id.repoUrlEditor);
         userNameEditor = this.findViewById(R.id.userNameEditor);
@@ -316,6 +319,23 @@ public class EditProjectActivity extends AppCompatActivity {
         super.onResume();
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        manualSyncNotificationPermission.saveInstanceState(outState);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        manualSyncNotificationPermission.onRequestPermissionsResult(this, requestCode,
+                visible -> {
+                    startService(new Intent(this, ProjectService.class));
+                    if (visible) finish();
+                });
+    }
+
     void saveAndClose(String uri) {
         String rUrl = repoUrlEditor.getText().toString();
         String uName = userNameEditor.getText().toString();
@@ -331,11 +351,10 @@ public class EditProjectActivity extends AppCompatActivity {
         viewModel.addProject(getApplicationContext(), project);
 
         // Start the service for new projects
-        Intent startIntent = new Intent(this, ProjectService.class);
-        startService(startIntent);
-
-
-        finish();
+        manualSyncNotificationPermission.runOrRequest(this, visible -> {
+            startService(new Intent(this, ProjectService.class));
+            if (visible) finish();
+        });
     }
 
     private boolean checkIfDirectoryIsEmpty(Uri uri) {
@@ -384,7 +403,11 @@ public class EditProjectActivity extends AppCompatActivity {
                 viewModel.saveProjects(getApplicationContext());
                 viewModel.updateProjects();
                 if (authenticationRecovery) {
-                    startService(new Intent(this, ProjectService.class));
+                    manualSyncNotificationPermission.runOrRequest(this, visible -> {
+                        startService(new Intent(this, ProjectService.class));
+                        if (visible) finish();
+                    });
+                    return;
                 }
             }
             finish();

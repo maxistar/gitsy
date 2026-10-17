@@ -209,14 +209,7 @@ public final class SettingsActivity extends AppCompatActivity {
     }
 
     private void openNotificationSettings() {
-        Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
-        try {
-            startActivity(intent);
-        } catch (ActivityNotFoundException error) {
-            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.parse("package:" + getPackageName())));
-        }
+        NotificationSettingsLauncher.open(this);
     }
 
     private void openSshKeyDocument() {

@@ -14,6 +14,9 @@
     <string name="foreground_service_title">GitSy Sync Service</string>
     <string name="starting_service">Starting Service…</string>
     <string name="foreground_service_channel">GitSy Sync Channel</string>
+    <string name="sync_notification_permission_title">Sync notifications are disabled</string>
+    <string name="sync_notification_permission_message">GitSy will continue synchronizing, but Android is hiding the progress notification. Allow notifications to see the current sync phase.</string>
+    <string name="sync_notification_permission_settings">Open notification settings</string>
     <string name="read_more">Read more on the website…</string>
     <string name="documentation_url">https://gitsy.de/documentation/</string>
 

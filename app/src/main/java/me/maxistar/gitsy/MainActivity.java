@@ -40,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements
     private StartupSyncSession startupSyncSession;
     private SharedPreferencesStartupSyncSettings startupSettingsRepository;
     private SshOperationAttentionEvent displayedSshAttention;
+    private final ManualSyncNotificationPermission manualSyncNotificationPermission =
+            new ManualSyncNotificationPermission();
     private final EventBus.EventListener<SshOperationAttentionEvent> sshAttentionListener =
             event -> runOnUiThread(() -> showSshAttention(event));
 
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        manualSyncNotificationPermission.restoreInstanceState(savedInstanceState);
 
         recyclerView = findViewById(R.id.recyclerView);
         emptyView = findViewById(R.id.empty_view);
@@ -159,6 +162,18 @@ public class MainActivity extends AppCompatActivity implements
         super.onDestroy();
     }
 
+    @Override protected void onSaveInstanceState(@NonNull Bundle outState) {
+        manualSyncNotificationPermission.saveInstanceState(outState);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode,
+            @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        manualSyncNotificationPermission.onRequestPermissionsResult(this, requestCode,
+                visible -> startManualProjectService());
+    }
+
     private void showSshAttention(SshOperationAttentionEvent event) {
         if (isFinishing() || isDestroyed()) return;
         if (displayedSshAttention == event) return;
@@ -176,7 +191,8 @@ public class MainActivity extends AppCompatActivity implements
                                 displayedSshAttention = null;
                                 event.getProject().setStatus(event.getRetryStatus());
                                 viewModel.saveProjects(getApplicationContext());
-                                startService(new Intent(this, ProjectService.class));
+                                manualSyncNotificationPermission.runOrRequest(this,
+                                        visible -> startManualProjectService());
                             }
                         } catch (Exception error) {
                             android.widget.Toast.makeText(this, R.string.ssh_host_trust_error,
@@ -279,8 +295,8 @@ public class MainActivity extends AppCompatActivity implements
         }
         if (item.getItemId() == 1) { // Synchronyze option
             viewModel.syncProject(getApplicationContext(), item.getGroupId()); // groupId used as the position
-            Intent startIntent = new Intent(this, ProjectService.class);
-            startService(startIntent);
+            manualSyncNotificationPermission.runOrRequest(this,
+                    visible -> startManualProjectService());
             return true;
         }
         if (item.getItemId() == 2) { // Edit action
@@ -361,8 +377,12 @@ public class MainActivity extends AppCompatActivity implements
 
     private void syncAllRepos() {
         viewModel.syncAllProjects(getApplicationContext());
-        Intent startIntent = new Intent(this, ProjectService.class);
-        startService(startIntent);
+        manualSyncNotificationPermission.runOrRequest(this,
+                visible -> startManualProjectService());
+    }
+
+    private void startManualProjectService() {
+        startService(new Intent(this, ProjectService.class));
     }
 
     private void showInterruptedOperationRecovery() {

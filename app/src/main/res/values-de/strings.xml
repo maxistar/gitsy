@@ -14,6 +14,9 @@
     <string name="foreground_service_title">GitSy-Synchronisierungsdienst</string>
     <string name="starting_service">Dienst wird gestartet…</string>
     <string name="foreground_service_channel">GitSy-Synchronisierungskanal</string>
+    <string name="sync_notification_permission_title">Synchronisierungsbenachrichtigungen sind deaktiviert</string>
+    <string name="sync_notification_permission_message">GitSy synchronisiert weiter, aber Android blendet die Fortschrittsbenachrichtigung aus. Erlauben Sie Benachrichtigungen, um die aktuelle Synchronisierungsphase zu sehen.</string>
+    <string name="sync_notification_permission_settings">Benachrichtigungseinstellungen öffnen</string>
     <string name="read_more">Mehr auf der Website lesen…</string>
     <string name="documentation_url">https://gitsy.de/documentation/</string>
 

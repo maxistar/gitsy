@@ -178,6 +178,9 @@ public class SettingsActivityTest {
             assertFalse(localized.getString(R.string.scheduled_sync_notification_denied).isEmpty());
             assertFalse(localized.getString(R.string.scheduled_sync_running).isEmpty());
             assertFalse(localized.getString(R.string.scheduled_sync_failure_attention).isEmpty());
+            assertFalse(localized.getString(R.string.sync_notification_permission_title).isEmpty());
+            assertFalse(localized.getString(R.string.sync_notification_permission_message).isEmpty());
+            assertFalse(localized.getString(R.string.sync_notification_permission_settings).isEmpty());
         }
     }
 
@@ -275,8 +278,19 @@ public class SettingsActivityTest {
     }
 
     private void appOpNotifications(String mode) {
-        shell("cmd appops set " + context.getPackageName()
-                + " POST_NOTIFICATION " + mode);
+        try {
+            if ("ignore".equals(mode)) {
+                InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                        .revokeRuntimePermission(context.getPackageName(),
+                                android.Manifest.permission.POST_NOTIFICATIONS);
+            } else {
+                InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                        .grantRuntimePermission(context.getPackageName(),
+                                android.Manifest.permission.POST_NOTIFICATIONS);
+            }
+        } catch (Exception error) {
+            throw new AssertionError(error);
+        }
     }
 
     private void shell(String command) {
