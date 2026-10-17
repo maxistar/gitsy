@@ -3,10 +3,14 @@ package me.maxistar.gitsy;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.menu.MenuBuilder;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -47,6 +51,47 @@ public class MainActivity extends AppCompatActivity implements
         recyclerView = findViewById(R.id.recyclerView);
         emptyView = findViewById(R.id.empty_view);
         Button addProjectButton = findViewById(R.id.btn_add_project);
+
+        final int initialPaddingLeft = recyclerView.getPaddingLeft();
+        final int initialPaddingTop = recyclerView.getPaddingTop();
+        final int initialPaddingRight = recyclerView.getPaddingRight();
+        final int initialPaddingBottom = recyclerView.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(recyclerView, (view, windowInsets) -> {
+            Insets systemInsets = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            WindowInsetsCompat rootInsets = ViewCompat.getRootWindowInsets(view);
+            if (Build.VERSION.SDK_INT >= 35 && rootInsets != null) {
+                Insets rootSystemInsets = rootInsets.getInsets(
+                        WindowInsetsCompat.Type.systemBars()
+                                | WindowInsetsCompat.Type.displayCutout());
+                systemInsets = Insets.of(
+                        Math.max(systemInsets.left, rootSystemInsets.left),
+                        Math.max(systemInsets.top, rootSystemInsets.top),
+                        Math.max(systemInsets.right, rootSystemInsets.right),
+                        Math.max(systemInsets.bottom, rootSystemInsets.bottom));
+            }
+            view.setPadding(
+                    initialPaddingLeft,
+                    initialPaddingTop + systemInsets.top,
+                    initialPaddingRight,
+                    initialPaddingBottom + systemInsets.bottom);
+            return windowInsets;
+        });
+        recyclerView.setClipToPadding(false);
+        recyclerView.post(() -> {
+            ViewCompat.requestApplyInsets(recyclerView);
+            WindowInsetsCompat rootInsets = ViewCompat.getRootWindowInsets(recyclerView);
+            if (Build.VERSION.SDK_INT >= 35 && rootInsets != null) {
+                Insets systemInsets = rootInsets.getInsets(
+                        WindowInsetsCompat.Type.systemBars()
+                                | WindowInsetsCompat.Type.displayCutout());
+                recyclerView.setPadding(
+                        initialPaddingLeft,
+                        initialPaddingTop + systemInsets.top,
+                        initialPaddingRight,
+                        initialPaddingBottom + systemInsets.bottom);
+            }
+        });
         
         addProjectButton.setOnClickListener(v -> addRepository());
         
