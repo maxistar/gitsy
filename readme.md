@@ -31,16 +31,89 @@ are not available in this release.
 
 ## Deployment
 
-### Manual Deployment
+### Preferred deployment: GitHub Releases
 
-- update version in [build.gradle](app/build.gradle)
-- use menu item "Build" -> "Generate Signed App Bundle of Apk"
+The preferred release path is automated. It starts with a versioned release PR and ends with a signed GitHub Release, a Google Play closed-testing upload, and synchronization of the released `master` commit back into `dev`.
 
-### GitHub Releases
+The executable sources of truth are [`release-config.json`](release-config.json), [`scripts/release_tool.py`](scripts/release_tool.py), and these workflows:
 
-A GitHub Release is created from a merged `release/<versionName>` (based on `dev`) or `hotfix/<versionName>` (based on `master`) pull request into `master`. The release automation creates an annotated `v<versionName>` tag, publishes signed APK/AAB assets and `SHA256SUMS`, then merges `master` back into `dev`.
+- [Validate Android Release PR](.github/workflows/release-pr.yml)
+- [Create Android Release](.github/workflows/create-release.yml)
+- [Publish Tagged Android Release](.github/workflows/android-release.yml)
+- [Sync Released Master to Dev](.github/workflows/sync-master-to-dev.yml)
 
-Before opening a release PR, increment `versionCode` and SemVer `versionName` in `app/build.gradle`, then create non-placeholder notes for both locales under `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`. `python3 scripts/release_tool.py prepare` creates missing placeholders; `python3 scripts/release_tool.py validate` checks a release branch.
+#### 1. Prepare a release branch
+
+Regular releases use `release/<versionName>` branches based on `dev`:
+
+```bash
+git fetch origin dev master --tags
+git switch dev
+git pull --ff-only origin dev
+git switch -c release/0.1.4
+```
+
+Hotfixes use `hotfix/<versionName>` branches based on `master`:
+
+```bash
+git fetch origin master --tags
+git switch master
+git pull --ff-only origin master
+git switch -c hotfix/0.1.4
+```
+
+Choose a new SemVer `versionName`. Increase `versionCode` in [`app/build.gradle`](app/build.gradle); it must be greater than the version code in every previous `v*` release tag. Update both values before running the validation commands.
+
+#### 2. Prepare and validate release metadata
+
+The release tool creates missing changelog placeholders for the version currently in `app/build.gradle`:
+
+```bash
+python3 scripts/release_tool.py prepare
+```
+
+Replace the placeholders with real release notes in both required locales:
+
+```text
+fastlane/metadata/android/en-US/changelogs/<versionCode>.txt
+fastlane/metadata/android/ru-RU/changelogs/<versionCode>.txt
+```
+
+Run the local checks before opening the PR:
+
+```bash
+python3 scripts/release_tool.py validate
+python3 -m unittest scripts/test_release_tool.py
+./gradlew :app:testDebugUnitTest :app:assembleRelease :app:bundleRelease --no-daemon
+```
+
+`validate` checks SemVer, the branch name and base branch, a strictly increasing `versionCode`, an unused tag name, and non-empty non-placeholder changelogs. The release PR must target `master`.
+
+#### 3. Open and merge the release PR
+
+Open a PR from `release/<versionName>` or `hotfix/<versionName>` into `master`. The release-specific workflow validates the metadata and builds release APK/AAB artifacts. Merge only after the repository's required checks and reviews pass.
+
+Do not create the release tag manually. After a qualifying PR is merged, `Create Android Release` verifies the merge identity and required checks, then creates one annotated immutable tag named `v<versionName>`.
+
+#### 4. Publish the release
+
+The tagged-release workflow checks out the immutable tag and builds:
+
+- a signed `gitsy-<versionName>.apk`;
+- a signed `gitsy-<versionName>.aab`;
+- `SHA256SUMS` covering both artifacts.
+
+It then creates the GitHub Release and uploads the verified AAB to the Google Play closed-testing `alpha` track. The workflow uploads no APK to Google Play, no production release, and no screenshots or store images.
+
+After publication succeeds, the release orchestration merges `master` back into `dev` with a no-fast-forward merge.
+
+#### 5. Verify the result
+
+Check the GitHub Release assets and checksum manifest, then confirm that the matching `versionCode` is visible in the Play Console `alpha` track. The GitHub Release and Google Play closed-testing upload are separate outputs; a successful GitHub Release does not by itself mean that the app is in production.
+
+### Release prerequisites and secrets
+
+GitHub Actions must have write permission for the release automation. In **Settings → Actions → General → Workflow permissions**, select **Read and write permissions**, and allow `github-actions[bot]` to create tags/releases and push the post-release merge if branch rules are configured.
 
 Configure these GitHub Actions secrets:
 
@@ -48,14 +121,19 @@ Configure these GitHub Actions secrets:
 - `ANDROID_KEYSTORE_PASSWORD`
 - `ANDROID_KEY_ALIAS`
 - `ANDROID_KEY_PASSWORD`
+- `GOOGLE_PLAY_SERVICE_ACCOUNT`
 
-Repository Actions permissions and branch rules must allow `github-actions[bot]` to create tags/releases and push the post-release `master`-to-`dev` merge. In GitHub **Settings → Actions → General → Workflow permissions**, select **Read and write permissions** (the repository currently reports the default as read-only), and permit the bot in branch rules if rules are added later. If a tag exists but publishing failed, run **Publish Tagged Android Release** manually with that immutable tag. This phase does not use SCP/SSH delivery, Fastlane, or Google Play uploads.
+`GOOGLE_PLAY_SERVICE_ACCOUNT` contains the compact service-account JSON encoded as base64. The service account must have access to the `me.maxistar.gitsy` Play Console app, the **Google Play Android Developer API** must be enabled, and the `alpha` closed-testing track must exist. The workflows decode signing and service-account material only into temporary runner files; do not commit or paste these values into the repository.
 
-### Automatic deployment
+### Recovery for an existing immutable tag
 
-GitHub Release publishing is automated as described above. After GitHub Release assets are created or checksum-verified, the same workflow uploads the verified AAB to the Google Play closed-testing `alpha` track.
+If tag creation succeeded but publication did not complete, manually run **Publish Tagged Android Release** from GitHub Actions and provide the existing immutable tag, for example `v0.1.4`. The workflow validates the annotated tag and its release identity before publishing. If a complete GitHub Release already exists, it downloads the assets and verifies `SHA256SUMS` instead of replacing them.
 
-For Google Play delivery, create a Google Cloud service account, enable the **Google Play Android Developer API**, add the service account to the Play Console app `me.maxistar.gitsy` with release-management access, and confirm the `alpha` closed-testing track exists. Store the compact service-account JSON as base64 in the `GOOGLE_PLAY_SERVICE_ACCOUNT` GitHub Actions secret. The workflow uploads no APKs, images, screenshots, or production releases; the matching version code must be visible in `alpha` after a successful run.
+If publication succeeds but the original orchestration did not synchronize branches, manually run **Sync Released Master to Dev** with the same tag. It verifies that the tag resolves to a commit reachable from `master` before pushing the merge to `dev`.
+
+### Manual local deployment
+
+Android Studio can still be used as a local fallback: update the version in [`app/build.gradle`](app/build.gradle), then use **Build → Generate Signed Bundle / APK**. This produces a local signed artifact only; it does not create the annotated tag, GitHub Release, checksum manifest, Google Play upload, or `master`-to-`dev` synchronization performed by the preferred automated path.
 
 
 ## Todo
