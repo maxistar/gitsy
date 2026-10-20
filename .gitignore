@@ -15,4 +15,5 @@
 local.properties
 .idea
 app/release
+__pycache__
 
