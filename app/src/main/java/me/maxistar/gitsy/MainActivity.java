@@ -111,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements
         viewModel.getProjects().observe(this, projects -> {
             adapter.setProjects(projects);
             checkIfEmpty(projects.size());
+            invalidateOptionsMenu();
         });
         startupSyncSession = ServiceLocator.getInstance().getStartupSyncSession();
         startupSettingsRepository = new SharedPreferencesStartupSyncSettings(getApplicationContext());

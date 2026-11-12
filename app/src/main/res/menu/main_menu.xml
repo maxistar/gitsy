@@ -2,20 +2,24 @@
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/menu_add_repo"
-        android:title="@string/AddRepo"
-        android:icon="@drawable/ic_save_as"
+        android:id="@+id/menu_sync_all"
+        android:title="@string/SyncAll"
+        android:icon="@drawable/ic_sync"
+        android:orderInCategory="0"
+        app:showAsAction="ifRoom"
         app:iconTint="@color/colorIcon" />
 
     <item
-        android:id="@+id/menu_sync_all"
-        android:title="@string/SyncAll"
-        android:icon="@drawable/ic_settings"
+        android:id="@+id/menu_add_repo"
+        android:title="@string/AddRepo"
+        android:icon="@drawable/ic_save_as"
+        android:orderInCategory="1"
         app:iconTint="@color/colorIcon" />
 
     <item
         android:id="@+id/menu_settings"
         android:title="@string/settings_title"
         android:icon="@drawable/ic_settings"
+        android:orderInCategory="2"
         app:iconTint="@color/colorIcon" />
 </menu>
