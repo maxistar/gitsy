@@ -171,6 +171,19 @@
             android:text="@string/ssh_key_import" />
 
         <Button
+            android:id="@+id/settings_ssh_generate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/ssh_key_generate" />
+
+        <Button
+            android:id="@+id/settings_ssh_show_public"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/ssh_key_show_public"
+            android:visibility="gone" />
+
+        <Button
             android:id="@+id/settings_ssh_delete"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

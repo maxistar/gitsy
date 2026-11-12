@@ -1,6 +1,9 @@
 package me.maxistar.gitsy;
 
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.app.TimePickerDialog;
 import android.content.pm.PackageInfo;
@@ -16,6 +19,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,6 +55,9 @@ public final class SettingsActivity extends AppCompatActivity {
     private TextView sshSummary;
     private Button sshImport;
     private Button sshDelete;
+    private Button sshGenerate;
+    private Button sshShowPublic;
+    private String configuredPublicKey;
     private byte[] pendingPrivateKey;
     private static final int REQUEST_NOTIFICATIONS = 42;
     private SharedPreferencesScheduledSyncSettings scheduledRepository;
@@ -82,6 +89,8 @@ public final class SettingsActivity extends AppCompatActivity {
         sshSummary = findViewById(R.id.settings_ssh_summary);
         sshImport = findViewById(R.id.settings_ssh_import);
         sshDelete = findViewById(R.id.settings_ssh_delete);
+        sshGenerate = findViewById(R.id.settings_ssh_generate);
+        sshShowPublic = findViewById(R.id.settings_ssh_show_public);
         scheduledEnabled = findViewById(R.id.scheduled_sync_enabled);
         scheduledTime = findViewById(R.id.scheduled_sync_time);
         scheduledNext = findViewById(R.id.scheduled_sync_next);
@@ -137,6 +146,8 @@ public final class SettingsActivity extends AppCompatActivity {
         findViewById(R.id.settings_terms_row).setOnClickListener(
                 view -> openExternalUrl(GitsyPublicLinks.TERMS));
         sshImport.setOnClickListener(view -> openSshKeyDocument());
+        sshGenerate.setOnClickListener(view -> confirmSshKeyGeneration());
+        sshShowPublic.setOnClickListener(view -> showPublicKey());
         sshDelete.setOnClickListener(view -> confirmDeleteSshKey());
         renderSshIdentity();
     }
@@ -297,6 +308,8 @@ public final class SettingsActivity extends AppCompatActivity {
     private void renderSshIdentity() {
         boolean available = sshIdentities != null && sshIdentities.contains();
         sshDelete.setVisibility(available ? View.VISIBLE : View.GONE);
+        configuredPublicKey = available ? loadPublicKey() : null;
+        sshShowPublic.setVisibility(configuredPublicKey == null ? View.GONE : View.VISIBLE);
         sshImport.setText(available ? R.string.ssh_key_replace : R.string.ssh_key_import);
         if (!available) { sshSummary.setText(R.string.ssh_key_not_configured); return; }
         try {
@@ -304,6 +317,125 @@ public final class SettingsActivity extends AppCompatActivity {
             sshSummary.setText(getString(R.string.ssh_key_summary, metadata.getAlgorithm(),
                     metadata.getKeySize(), metadata.getFingerprint()));
         } catch (Exception error) { sshSummary.setText(R.string.ssh_key_error_storage); }
+    }
+
+    private String loadPublicKey() {
+        byte[] privateKey = null;
+        com.jcraft.jsch.KeyPair pair = null;
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            privateKey = sshIdentities.loadPrivateKey();
+            pair = com.jcraft.jsch.KeyPair.load(new com.jcraft.jsch.JSch(), privateKey, null);
+            pair.writePublicKey(output, "gitsy@android");
+            String publicKey = output.toString("UTF-8").trim();
+            return publicKey.isEmpty() ? null : publicKey;
+        } catch (Exception error) {
+            return null;
+        } finally {
+            if (privateKey != null) Arrays.fill(privateKey, (byte) 0);
+            if (pair != null) pair.dispose();
+        }
+    }
+
+    private void confirmSshKeyGeneration() {
+        boolean replacing = sshIdentities != null && sshIdentities.contains();
+        new AlertDialog.Builder(this)
+                .setTitle(replacing ? R.string.ssh_key_generate_replace_title
+                        : R.string.ssh_key_generate_title)
+                .setMessage(replacing ? R.string.ssh_key_generate_replace_message
+                        : R.string.ssh_key_generate_message)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.ssh_key_generate_continue,
+                        (dialog, which) -> chooseSshKeyAlgorithm())
+                .show();
+    }
+
+    private void chooseSshKeyAlgorithm() {
+        String[] algorithms = {getString(R.string.ssh_key_algorithm_ed25519),
+                getString(R.string.ssh_key_algorithm_rsa)};
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.ssh_key_algorithm_title)
+                .setSingleChoiceItems(algorithms, 0, (dialog, which) -> {
+                    dialog.dismiss();
+                    generateSshKey(which == 0 ? SshPrivateKeyGenerator.ED25519
+                            : SshPrivateKeyGenerator.RSA);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void generateSshKey(int keyType) {
+        if (sshImporter == null) {
+            Toast.makeText(this, R.string.ssh_key_error_storage, Toast.LENGTH_LONG).show();
+            return;
+        }
+        ProgressBar progress = new ProgressBar(this);
+        int padding = (int) (24 * getResources().getDisplayMetrics().density);
+        progress.setPadding(padding, padding, padding, padding);
+        AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.ssh_key_generating)
+                .setView(progress)
+                .setCancelable(false)
+                .show();
+        Thread worker = new Thread(() -> {
+            SshPrivateKeyGenerator.GeneratedKey generated = null;
+            Exception failure = null;
+            try {
+                generated = new SshPrivateKeyGenerator(new SshPrivateKeyParser(), sshImporter)
+                        .generateAndStore(keyType);
+            } catch (Exception error) {
+                failure = error;
+            }
+            SshPrivateKeyGenerator.GeneratedKey result = generated;
+            Exception error = failure;
+            runOnUiThread(() -> {
+                progressDialog.dismiss();
+                if (isFinishing() || isDestroyed()) return;
+                if (error != null || result == null) {
+                    Toast.makeText(this, R.string.ssh_key_error_generation,
+                            Toast.LENGTH_LONG).show();
+                    renderSshIdentity();
+                    return;
+                }
+                configuredPublicKey = result.getPublicKey();
+                renderSshIdentity();
+                sshShowPublic.setVisibility(View.VISIBLE);
+                Toast.makeText(this, R.string.ssh_key_generate_success,
+                        Toast.LENGTH_LONG).show();
+                showPublicKey();
+            });
+        }, "gitsy-ssh-key-generation");
+        worker.start();
+    }
+
+    private void showPublicKey() {
+        if (configuredPublicKey == null) return;
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        content.setPadding(padding, 0, padding, 0);
+        TextView publicKey = new TextView(this);
+        publicKey.setText(configuredPublicKey);
+        publicKey.setTextIsSelectable(true);
+        content.addView(publicKey);
+        TextView guidance = new TextView(this);
+        guidance.setText(R.string.ssh_key_public_guidance);
+        guidance.setPadding(0, padding, 0, 0);
+        content.addView(guidance);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.ssh_key_public_title)
+                .setView(content)
+                .setPositiveButton(R.string.ssh_key_copy_public, (dialog, which) -> {
+                    ClipboardManager clipboard = (ClipboardManager)
+                            getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (clipboard != null) {
+                        clipboard.setPrimaryClip(ClipData.newPlainText(
+                                getString(R.string.ssh_key_public_title), configuredPublicKey));
+                        Toast.makeText(this, R.string.ssh_key_public_copied,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void confirmDeleteSshKey() {
